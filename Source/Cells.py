@@ -1,4 +1,12 @@
-import World
+# Constants
+NUM_GOLD = 1
+NUM_ARROW = 1
+PIT = 'P'
+WUMPUS = 'W'
+GOLD = 'G'
+STENCH = 'S'
+BREEZE = 'B'
+EMPTY = '.'
 
 class Cell:
     def __init__(self, x, y):
@@ -15,27 +23,27 @@ class Cell:
 
     def add_content(self, content):
         """Thêm nội dung vào ô (Wumpus, pit, gold)"""
-        if content == World.WUMPUS:
+        if content == WUMPUS:
             self.has_wumpus = True
-        elif content == World.PIT:
+        elif content == PIT:
             self.has_pit = True
-        elif content == World.GOLD:
+        elif content == GOLD:
             self.has_gold = True
             self.has_glitter = True  # Ô có vàng thì có glitter
 
     def add_effect(self, effect):
         """Thêm hiệu ứng (stench, breeze)"""
-        if effect == World.STENCH:
+        if effect == STENCH:
             self.has_stench = True
-        elif effect == World.BREEZE:
+        elif effect == BREEZE:
             self.has_breeze = True
 
     def remove_content(self, content):
         """Xóa nội dung (ví dụ: khi Wumpus chết hoặc vàng bị nhặt)"""
-        if content == World.WUMPUS:
+        if content == WUMPUS:
             self.has_wumpus = False
             self.has_stench = False  # Xóa stench nếu Wumpus chết
-        elif content == World.GOLD:
+        elif content == GOLD:
             self.has_gold = False
             self.has_glitter = False  # Xóa glitter nếu vàng bị nhặt
 
@@ -52,21 +60,21 @@ class Cell:
     def __str__(self):
         """Hiển thị trạng thái ô cho visualization"""
         if self.has_wumpus:
-            return World.WUMPUS
+            return WUMPUS
         
         elif self.has_pit:
-            return World.PIT
+            return PIT
         
         elif self.has_gold:
-            return World.GOLD
+            return GOLD
         
         elif self.has_stench and self.has_breeze:
-            return f"{World.STENCH},{World.BREEZE}"
+            return f"{STENCH},{BREEZE}"
         
         elif self.has_stench:
-            return World.STENCH
+            return STENCH
         
         elif self.has_breeze:
-            return World.BREEZE
+            return BREEZE
         
-        return World.EMPTY
+        return EMPTY

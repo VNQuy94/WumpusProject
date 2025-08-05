@@ -1,5 +1,7 @@
 from Solution import InferenceEngine
 from KnowledgeBase import KnowledgeBase, Clause
+from Planner import Planner
+from Cells import Cell
 
 def P(x, y):
     """Tạo literal 'Có Hố' tại (x,y)"""
@@ -30,15 +32,22 @@ def Not(literal):
 class Agent:
     def __init__(self, size):
         self.size = size
+        self.kb_world = None
         self.kb = KnowledgeBase()
         self.engine = InferenceEngine()
-        
+        self.planner = Planner(size)
         self.current_pos = (0, 0)
-        self.visited_cells = set()
-        
-        # # Thêm sự thật ban đầu
-        # # Thay vì ~P00, ~W00, chúng ta tạo ra các sự thật khẳng định
-        # self.kb.tell(f'OK00') # Ô (0,0) an toàn
+        self.direction = "East"
+        self.has_arrow = True
+        self.has_gold = False
+        self.action_count = 0
+        self.kb.tell(f'OK00')   # Ô (0,0) an toàn
+
+    def create_kb_world(self):
+        self.kb_world = [[Cell(i, j) for j in range(self.size)] for i in range(self.size)]
+        self.kb_world[0][0].is_safe = True
+        self.kb_world[0][0].is_visited = True
+
 
     def _get_neighbors(self, x, y):
         """Lấy các ô hàng xóm hợp lệ."""
@@ -87,74 +96,53 @@ class Agent:
             self.kb.tell(OK(x, y))
             self.add_safe_rules(x, y)
 
-    def mark_visited(self):
-        """Đánh dấu ô hiện tại là đã thăm."""
-        self.visited_cells.add(self.current_pos)
-
     def make_decision(self):
-        """
-        Sử dụng bộ não để tìm các ô an toàn và quyết định nước đi tiếp theo.
-        """
+        """Sử dụng A* để lập kế hoạch hành động."""
         x, y = self.current_pos
-        
-        neighbors = self._get_neighbors(x, y)
+        state = (x, y, self.direction, self.has_arrow, self.has_gold, self.action_count)
+        action = self.planner.plan(state, self.kb_world)
 
-        safe_moves = []
-
-        for nx, ny in neighbors:
-            # Chỉ xem xét các ô chưa thăm
-            if (nx, ny) not in self.visited_cells:
-                # Hỏi bộ não: "Liệu ô (nx,ny) có an toàn không?"
-                is_safe = self.engine.ask(self.kb, OK(nx, ny))
-                if is_safe:
-                    safe_moves.append((nx, ny))
-                        
-        print(f"Inferred safe and unvisited cells: {safe_moves}")
-        
-        if not safe_moves:
-            print("Decision: No provably safe moves. Agent should consider backtracking or taking a risk.")
+        if not action:
+            print("No safe plan found. Agent may need to backtrack or take a risk.")
             return None
-        else:
-            # Logic đơn giản: chọn ô an toàn gần nhất để đi
-            # (Ở đây bạn sẽ tích hợp thuật toán A*)
-            next_move = safe_moves[0]
-            print(f"Decision: Plan to move to the safe cell {next_move}.")
-            self.current_pos = next_move
-            self.mark_visited()
-        
-# --- Main Execution ---
-if __name__ == "__main__":
-    # Kịch bản giả lập
-    # Agent bắt đầu ở (0,0), không cảm thấy gì.
-    my_agent = Agent(size=4)
-    
-    # Lượt 1: Tại (0,0)
-    print("--- TURN 1 ---")
-    print(f"Current position: {my_agent.current_pos}")
-    percepts_at_00 = {} # Không có gì
-    my_agent.perceive_and_update(percepts_at_00)
-    print(my_agent.kb)
-    my_agent.make_decision() # Sẽ suy ra (0,1) và (1,0) là an toàn
 
-    # Lượt 2: Agent di chuyển đến (1,0)
-    # Giả sử tại (1,0) có gió mát
-    print("\n--- TURN 2 ---")
-    # my_agent.current_pos = (1,0)
-    print(f"Current position: {my_agent.current_pos}")
-    percepts_at_01 = {'breeze': True}
-    my_agent.perceive_and_update(percepts_at_01)
-    print(my_agent.kb)
-    my_agent.make_decision() # Lần này sẽ không thể chứng minh (2,0) hay (1,1) an toàn
-                             # chỉ dựa trên quy tắc đơn giản.
-    
-    my_agent.make_decision()  # Agent sẽ quyết định di chuyển đến (0,1) hoặc (1,1) nếu có quy tắc an toàn
-    print(f"Current position: {my_agent.current_pos}")
+        # Thực hiện hành động trong kế hoạch
+        print(f"Decision: {action}")
+        self.action_count += 1
 
-    # Lượt 3: Giả sử tại (1,0) có mùi hôi
-    print("\n--- TURN 3 ---")
-    print(f"Current position: {my_agent.current_pos}")
-    percepts_at_01 = {'stench': True}
-    my_agent.perceive_and_update(percepts_at_01)
-    print(my_agent.kb)
-    my_agent.make_decision() # Lần này sẽ không thể chứng minh (2,0) hay (1,1) an toàn
-                            # chỉ dựa trên quy tắc đơn giản.
+        if action == "Move Forward":
+            if self.direction == "East":
+                self.current_pos = (x + 1, y)
+                self.kb_world[x + 1][y].is_visited = True
+
+            elif self.direction == "West":
+                self.current_pos = (x - 1, y)
+                self.kb_world[x - 1][y].is_visited = True
+
+            elif self.direction == "North":
+                self.current_pos = (x, y + 1)
+                self.kb_world[x][y + 1].is_visited = True
+
+            elif self.direction == "South":
+                self.current_pos = (x, y - 1)
+                self.kb_world[x][y - 1].is_visited = True
+
+        elif action == "Turn Left":
+            dir_idx = self.planner.directions.index(self.direction)
+            self.direction = self.planner.directions[(dir_idx - 1) % 4]
+
+        elif action == "Turn Right":
+            dir_idx = self.planner.directions.index(self.direction)
+            self.direction = self.planner.directions[(dir_idx + 1) % 4]
+
+        elif action == "Grab":
+            self.has_gold = True
+            self.kb_world[x][y].remove_content('GOLD')
+
+        elif action == "Shoot":
+            self.has_arrow = False
+            # Giả sử World xử lý việc bắn và phát ra scream
+
+        elif action == "Climb":
+            if x == 0 and y == 0 and self.has_gold:
+                print("Agent climbs out with gold. Game over!")
