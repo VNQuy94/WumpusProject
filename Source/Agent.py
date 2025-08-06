@@ -1,5 +1,5 @@
-from Solution import InferenceEngine
-from KnowledgeBase import KnowledgeBase, Clause
+from ResolutionEngine import ResolutionEngine
+from KnowledgeBase import KnowledgeBase
 from Planner import Planner
 from Cells import Cell
 
@@ -31,19 +31,22 @@ class Agent:
         self.size = size
         self.kb_world = [[Cell(x, y) for y in range(self.size)] for x in range(self.size)]
         self.kb = KnowledgeBase()
-        self.engine = InferenceEngine()
+        self.engine = ResolutionEngine()
         self.planner = Planner(size)
+        self.actions = []
         self.current_pos = (0, 0)
         self.direction = "East"
         self.has_arrow = True
         self.has_gold = False
+        self.bump = False
         self.action_count = 0
 
     def create_kb_world(self):
         self.kb_world = [[Cell(i, j) for j in range(self.size)] for i in range(self.size)]
         self.kb_world[0][0].is_safe = True
         self.kb_world[0][0].is_visited = True
-
+        self.kb.tell(Not(P(0, 0)))
+        self.kb.tell(Not(W(0, 0)))
 
     def _get_neighbors(self, x, y):
         neighbors = []
@@ -89,92 +92,158 @@ class Agent:
     def perceive_and_update(self, percepts):
         x, y = self.current_pos
         # Transform percepts into knowledge base clauses
-        if percepts.get('stench'):
+        if not percepts[0]:
             self.kb.tell(S(x, y))
             self.add_wumpus_rules(x, y)
         else:
             self.kb.tell(Not(S(x, y)))
             neighbors = self._get_neighbors(x, y)
-            for nx, ny in self._get_neighbors(x, y):
+            for nx, ny in neighbors:
                 self.kb.tell(Not(W(nx, ny)))
             
-        if percepts.get('breeze'):
+        if not percepts[1]:
             self.kb.tell(B(x, y))
             self.add_pit_rules(x, y)
         else:
             self.kb.tell(Not(B(x, y)))
             neighbors = self._get_neighbors(x, y)
-            for nx, ny in self._get_neighbors(x, y):
+            for nx, ny in neighbors:
                 self.kb.tell(Not(P(nx, ny)))
 
-        if percepts.get('glitter'):
+        if percepts[2]:
             self.kb.tell(Glitter(x, y))
             self.add_gold_rules(x, y)
 
-    def mark_visited(self):
-        """Đánh dấu ô hiện tại là đã thăm."""
-        self.kb_world[self.current_pos[0]][self.current_pos[1]].set_is_visited(True)
-        self.self.kb_world[self.current_pos[0]][self.current_pos[1]].set_is_safe(True)
-        self.kb.tell(Not(P(self.current_pos[0], self.current_pos[1])))
-        self.kb.tell(Not(W(self.current_pos[0], self.current_pos[1])))
-
-    def make_decision(self):
-        """Sử dụng A* để lập kế hoạch hành động."""
+    def agent_update_position(self, action):
         x, y = self.current_pos
-        state = (x, y, self.direction, self.has_arrow, self.has_gold, self.action_count)
-        action = self.planner.plan(state, self.kb_world)
 
-        if not action:
-            print("No safe plan found. Agent may need to backtrack or take a risk.")
-            return None
-
-        # Thực hiện hành động trong kế hoạch
-        print(f"Decision: {action}")
-        self.action_count += 1
+        if action == "Turn left":
+            if self.direction == "East":
+                self.direction = "North"
+            elif self.direction == "North":
+                self.direction = "West"
+            elif self.direction == "West":
+                self.direction = "South"
+            elif self.direction == "South":
+                self.direction = "East"
+            
+        if action == "Turn right":
+            if self.direction == "East":
+                self.direction = "South"
+            elif self.direction == "South":
+                self.direction = "West"
+            elif self.direction == "West":
+                self.direction = "North"
+            elif self.direction == "North":
+                self.direction = "East"
 
         if action == "Move Forward":
             if self.direction == "East":
-                self.current_pos = (x + 1, y)
-                self.kb_world[x + 1][y].is_visited = True
+                x += 1
+                if x == 0 or x == self.size - 1:
+                    self.bump = True
+                    x -= 1
 
             elif self.direction == "West":
-                self.current_pos = (x - 1, y)
-                self.kb_world[x - 1][y].is_visited = True
-
-            elif self.direction == "North":
-                self.current_pos = (x, y + 1)
-                self.kb_world[x][y + 1].is_visited = True
+                x -= 1
+                if x == 0 or x == self.size - 1:
+                    self.bump = True
+                    x += 1
 
             elif self.direction == "South":
-                self.current_pos = (x, y - 1)
-                self.kb_world[x][y - 1].is_visited = True
+                y -= 1
+                if y == 0 or y == self.size - 1:
+                    self.bump = True
+                    y += 1
 
-        elif action == "Turn Left":
-            dir_idx = self.planner.directions.index(self.direction)
-            self.direction = self.planner.directions[(dir_idx - 1) % 4]
+            elif self.direction == "North":
+                y += 1
+                if y == 0 or y == self.size - 1:
+                    self.bump = True
+                    y -= 1
 
-        elif action == "Turn Right":
-            dir_idx = self.planner.directions.index(self.direction)
-            self.direction = self.planner.directions[(dir_idx + 1) % 4]
+        return x, y
 
-        elif action == "Grab":
-            self.has_gold = True
-            self.kb_world[x][y].remove_content('GOLD')
+    def make_decision(self, wumpus_world):
+        still_alive = True
 
-        elif action == "Shoot":
-            self.has_arrow = False
-            # Giả sử World xử lý việc bắn và phát ra scream
+        while(still_alive):
+            x, y = self.current_pos
+            percepts = wumpus_world.get_percepts(x, y)
 
-        elif action == "Climb":
-            if x == 0 and y == 0 and self.has_gold:
-                print("Agent climbs out with gold. Game over!")
+            self.perceive_and_update(percepts)
 
-# x, y = self.current_pos
-#     neighbors = self._get_neighbors(x, y)
-# for nx, ny in neighbors:
-#         # Chỉ     xem xét các ô chưa thăm
-#             is_safe_1 = self.engine.ask(self.kb, Not(P(nx, ny)))
-#             is_safe_2 = self.engine.ask(self.kb, Not(W(nx, ny)))
-#             if is_safe_1 and is_safe_2:
-#                 safe_moves.append((nx, ny))
-#                 self.kb_world[nx][ny].set_is_safe(True)
+            # Nếu danh sách hành động của agent không rỗng    
+            if len(self.actions):
+                action = self.actions.pop(0)
+
+                # Cập nhật vị trí hoặc hướng của agent qua hành động vừa lấy ra khỏi danh sách
+                new_x, new_y = self.agent_update_position(action)
+                self.action_count += 1
+
+                # Nếu agent di chuyển chạm tường
+                if self.bump:
+                    print(f"Đụng tường tại ({new_x}, {new_y})")
+                    self.bump = False
+                    continue
+                
+                if not self.current_pos == (new_x, new_y):
+                    # Cập nhật vị trí mới
+                    self.current_pos = (new_x, new_y)
+                    self.kb_world[new_x][new_y].is_visited = True
+
+                    # Kiểm tra vị trí mới
+                    if not wumpus_world.check_agent_action(x, y):
+                        print("Agent đã chết (gặp Wumpus hoặc hố)!")
+                        still_alive = False
+                        return False
+                
+                # Kiểm tra và nhặt vàng nếu có
+                if percepts[2]:  # Glitter = True
+                    self.has_gold = True
+                    action = "Grab"
+                    grab_gold = wumpus_world.check_agent_action(new_x, new_y, self.direction, action)
+                    if grab_gold:
+                        print(f"Agent nhặt vàng tại ({new_x}, {new_y})")
+                        self.actions = []  # Xóa danh sách hành động để lập kế hoạch mới
+
+                # Kiểm tra nếu ở (0,0) và có vàng thì leo ra
+                if self.has_gold and (new_x, new_y) == (0, 0):
+                    print("Agent leo ra tại (0,0) với vàng!")
+                    return True
+            
+            # Nếu danh sách hành động của agent là rỗng
+            else:
+                neighbors = self._get_neighbors(x, y) # Tìm kiếm các ô xung quanh
+
+                # Kiểm tra các ô xung quanh có an toàn hay không
+                for nx, ny in neighbors:
+                    is_safe_pit = self.engine.ask(self.kb, Not(P(nx, ny)))
+                    is_safe_wumpus = self.engine.ask(self.kb, Not(W(nx, ny)))
+
+                    # Cập nhật kb_world dựa trên kb
+                    if is_safe_pit and is_safe_wumpus:
+                        self.kb_world[nx][ny].is_safe = True
+
+                # Tìm kiếm danh sách các hành động mới
+                start_state = (x, y, self.direction, self. has_gold, self.action_count)
+                actions = self.planner.plan(start_state, self.kb_world)
+
+                # Nếu danh sách hành động không rỗng thì thêm nó vào danh sách hành động của agent
+                if actions:
+                    for action in actions:
+                        self.actions.append(action)
+                
+                # Nếu danh sách hành động trả về là rỗng
+                else:
+                    # Nếu vẫn chưa sử dụng mũi tên, bắn mũi tên theo vị trí và hướng đứng hiện tại
+                    if self.has_arrow:
+                        self.has_arrow = False
+                        action = "Shoot"
+                        kill_wumpus = wumpus_world.check_agent_action(x, y, self.direction, action)
+                        if kill_wumpus:
+                            print("Agent đã hạ gục Wumpus")
+
+                    # Trường hợp nếu không có cung tên
+
+        return False
