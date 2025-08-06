@@ -1,5 +1,4 @@
 import random
-from Cells import Cell
 
 # Constants
 NUM_GOLD = 1
@@ -22,24 +21,25 @@ class World:
         self.action_count = 0  # Đếm số hành động để hỗ trợ Moving Wumpus
 
     def create_world(self):
-        # Initialize world with Cell objects
-        world = [[Cell(i, j) for j in range(self.size)] for i in range(self.size)]
+        # Initialize world
+        world = [['.' for _ in range(self.size)] for _ in range(self.size)]
 
         # Randomly place Wumpus, avoiding (0,0)
         wumpus_count = 0
         while wumpus_count < self.num_wumpus:
             row = random.randint(0, self.size - 1)
             col = random.randint(0, self.size - 1)
-            if (row != 0 or col != 0) and not world[row][col].has_wumpus:
-                world[row][col].add_content(WUMPUS)
+
+            if (row != 0 or col != 0) and not world[row][col] == 'W':
+                world[row][col] = 'W'
                 self.add_effect(row, col, STENCH)
                 wumpus_count += 1
 
         # Randomly place pits based on p_pit
         for i in range(self.size):
             for j in range(self.size):
-                if (i != 0 or j != 0) and random.random() <= self.p_pit and not world[i][j].has_wumpus:
-                    world[i][j].add_content(PIT)
+                if (i != 0 or j != 0) and random.random() <= self.p_pit and not world[i][j] == 'W':
+                    world[i][j] = 'P'
                     self.add_effect(i, j, BREEZE)
 
         # Randomly place gold in an empty cell
@@ -47,8 +47,8 @@ class World:
         while gold_count < self.num_gold:
             row = random.randint(0, self.size - 1)
             col = random.randint(0, self.size - 1)
-            if not (world[row][col].has_wumpus or world[row][col].has_pit):
-                world[row][col].add_content(GOLD)
+            if not (world[row][col] == 'W' or world[row][col] == 'P'):
+                world[row][col] = 'G'
                 gold_count += 1
 
         return world
@@ -70,7 +70,7 @@ class World:
         if self.action_count % 5 == 0:  # Di chuyển sau mỗi 5 hành động
             for i in range(self.size):
                 for j in range(self.size):
-                    if self.world[i][j].has_wumpus:
+                    if self.world[i][j] == 'W':
                         # Xóa stench cũ
                         self.clear_effects(i, j, STENCH)
                         # Chọn ô lân cận ngẫu nhiên
@@ -79,11 +79,11 @@ class World:
                         for dr, dc in directions:
                             new_row, new_col = i + dr, j + dc
                             if (0 <= new_row < self.size and 0 <= new_col < self.size and
-                                not self.world[new_row][new_col].has_wumpus and
-                                not self.world[new_row][new_col].has_pit):
+                                not self.world[new_row][new_col] == 'W' and
+                                not self.world[new_row][new_col] == 'P'):
                                 # Di chuyển Wumpus
-                                self.world[i][j].remove_content(WUMPUS)
-                                self.world[new_row][new_col].add_content(WUMPUS)
+                                self.world[i][j] = '.'
+                                self.world[new_row][new_col] = 'W'
                                 self.add_effect(new_row, new_col, STENCH)
                                 break  # Chỉ di chuyển một lần
 
