@@ -3,36 +3,33 @@ from KnowledgeBase import KnowledgeBase, Clause
 from Planner import Planner
 from Cells import Cell
 
-def P(x, y):
-    """Tạo literal 'Có Hố' tại (x,y)"""
+# Create symbols for the Wumpus World
+def P(x, y): 
     return f"P{x}{y}"
 
-def W(x, y):
-    """Tạo literal 'Có Wumpus' tại (x,y)"""
+def W(x, y): 
     return f"W{x}{y}"
 
-def S(x, y):
-    """Tạo literal 'Có Mùi hôi' tại (x,y)"""
+def Gold(x, y): 
+    return f"Gold{x}{y}"
+
+def S(x, y): 
     return f"S{x}{y}"
 
-def B(x, y):
-    """Tạo literal 'Có Gió' tại (x,y)"""
+def B(x, y): 
     return f"B{x}{y}"
 
-def OK(x, y):
-    """Tạo literal 'Ô an toàn' tại (x,y)"""
-    return f"OK{x}{y}"
+def Glitter(x, y): 
+    return f"Gliter{x}{y}"
 
 def Not(literal):
-    """Tạo literal PHỦ ĐỊNH"""
-    if literal.startswith('~'):
-        return literal[1:]  # Phủ định hai lần thì về ban đầu
-    return f"~{literal}"
+    return f"~{literal}" if not literal.startswith('~') else literal[1:]
 
+# Class Agent
 class Agent:
     def __init__(self, size):
         self.size = size
-        self.kb_world = None
+        self.kb_world = [[Cell(x, y) for y in range(self.size)] for x in range(self.size)]
         self.kb = KnowledgeBase()
         self.engine = InferenceEngine()
         self.planner = Planner(size)
@@ -41,7 +38,6 @@ class Agent:
         self.has_arrow = True
         self.has_gold = False
         self.action_count = 0
-        self.kb.tell(f'OK00')   # Ô (0,0) an toàn
 
     def create_kb_world(self):
         self.kb_world = [[Cell(i, j) for j in range(self.size)] for i in range(self.size)]
@@ -50,7 +46,6 @@ class Agent:
 
 
     def _get_neighbors(self, x, y):
-        """Lấy các ô hàng xóm hợp lệ."""
         neighbors = []
         for dx, dy in [(0, 1), (0, -1), (1, 0), (-1, 0)]:
             nx, ny = x + dx, y + dy
@@ -60,41 +55,68 @@ class Agent:
 
     def add_wumpus_rules(self, x, y):
         neighbors = self._get_neighbors(x, y)
-        for nx, ny in neighbors:
-            rule = Clause([S(x, y)], W(nx, ny))
-            self.kb.add(rule)
+        if not neighbors:
+            return
+    
+        literals = [W(nx, ny) for nx, ny in neighbors]
+        self.kb.add([Not(S(x,y))] + literals)
 
+        for nx, ny in neighbors:
+            self.kb.add([Not(W(nx, ny)), S(x, y)])
+    
     def add_pit_rules(self, x, y):
         neighbors = self._get_neighbors(x, y)
+        if not neighbors:
+            return
+        
+        literals = [P(nx, ny) for nx, ny in neighbors]
+        self.kb.add([Not(B(x,y))] + literals)
+
         for nx, ny in neighbors:
-            rule = Clause([B(x, y)], P(nx, ny))
-            self.kb.add(rule)
+            self.kb.add([Not(P(nx, ny)), B(x, y)])
     
-    def add_safe_rules(self, x, y):
+    def add_gold_rules(self, x, y):
         neighbors = self._get_neighbors(x, y)
+        if not neighbors:
+            return 
+        
+        literals = [Gold(nx, ny) for nx, ny in neighbors]
+        self.kb.add([Not(Glitter(x,y))] + literals)
+
         for nx, ny in neighbors:
-            rule = Clause([Not(S(x, y)), Not(B(x, y))], OK(nx, ny))
-            self.kb.add(rule)
+            self.kb.add([Not(Gold(nx, ny)), Glitter(x, y)])
 
     def perceive_and_update(self, percepts):
         x, y = self.current_pos
-        # Dịch cảm nhận thành các symbol khẳng định
+        # Transform percepts into knowledge base clauses
         if percepts.get('stench'):
             self.kb.tell(S(x, y))
             self.add_wumpus_rules(x, y)
         else:
             self.kb.tell(Not(S(x, y)))
+            neighbors = self._get_neighbors(x, y)
+            for nx, ny in self._get_neighbors(x, y):
+                self.kb.tell(Not(W(nx, ny)))
             
         if percepts.get('breeze'):
             self.kb.tell(B(x, y))
             self.add_pit_rules(x, y)
         else:
             self.kb.tell(Not(B(x, y)))
-        
-        # Nếu không có mùi, không có gió, ô này chắc chắn an toàn
-        if not percepts.get('stench') and not percepts.get('breeze'):
-            self.kb.tell(OK(x, y))
-            self.add_safe_rules(x, y)
+            neighbors = self._get_neighbors(x, y)
+            for nx, ny in self._get_neighbors(x, y):
+                self.kb.tell(Not(P(nx, ny)))
+
+        if percepts.get('glitter'):
+            self.kb.tell(Glitter(x, y))
+            self.add_gold_rules(x, y)
+
+    def mark_visited(self):
+        """Đánh dấu ô hiện tại là đã thăm."""
+        self.kb_world[self.current_pos[0]][self.current_pos[1]].set_is_visited(True)
+        self.self.kb_world[self.current_pos[0]][self.current_pos[1]].set_is_safe(True)
+        self.kb.tell(Not(P(self.current_pos[0], self.current_pos[1])))
+        self.kb.tell(Not(W(self.current_pos[0], self.current_pos[1])))
 
     def make_decision(self):
         """Sử dụng A* để lập kế hoạch hành động."""
@@ -146,3 +168,13 @@ class Agent:
         elif action == "Climb":
             if x == 0 and y == 0 and self.has_gold:
                 print("Agent climbs out with gold. Game over!")
+
+# x, y = self.current_pos
+#     neighbors = self._get_neighbors(x, y)
+# for nx, ny in neighbors:
+#         # Chỉ     xem xét các ô chưa thăm
+#             is_safe_1 = self.engine.ask(self.kb, Not(P(nx, ny)))
+#             is_safe_2 = self.engine.ask(self.kb, Not(W(nx, ny)))
+#             if is_safe_1 and is_safe_2:
+#                 safe_moves.append((nx, ny))
+#                 self.kb_world[nx][ny].set_is_safe(True)
