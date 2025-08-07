@@ -21,7 +21,7 @@ class Planner:
 
         # Move Forward (chỉ đến ô an toàn)
         if direction == "East" and x < self.size - 1:
-            if kb_world[x + 1][y].is_safe:
+            if kb_world[x + 1][y].is_safe:  
                 neighbors.append(((x + 1, y, direction, has_arrow, has_gold, action_count + 1), "Move Forward", 1))
         elif direction == "West" and x > 0:
             if kb_world[x - 1][y].is_safe:

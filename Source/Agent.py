@@ -1,5 +1,5 @@
 from Solution import InferenceEngine
-from KnowledgeBase import KnowledgeBase, Clause
+from KnowledgeBase import KnowledgeBase
 from Planner import Planner
 from Cells import Cell
 

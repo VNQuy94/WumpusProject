@@ -41,34 +41,39 @@ class ResolutionEngine:
                 return True
         return False
 
+    # Main method to ask a query against the knowledge base by resolution.
     def ask(self, kb, query):
         if isinstance(query, str):
             query = (query,)
- 
+
+        # Convert the knowledge base to a set of clauses.
         clauses = set(kb.get_clauses())
 
+        # Add the negation of the query to the clauses.
         negated_query_clauses = self._negate_clause(query)
 
+        # Add the negated query clauses to the set of clauses.
         for neg_clause in negated_query_clauses:
             clauses.add(neg_clause)
         
+        # Iteratively resolve until no new clauses can be derived.
         while True:
             new_clauses = set()
             clauses_list = list(clauses)
             
+            # Try to resolve each pair of clauses.
             for i in range(len(clauses_list)):
                 for j in range(i + 1, len(clauses_list)):
                     resolvents = self._resolve(clauses_list[i], clauses_list[j])
 
                     for resolvent in resolvents:
+                        # If the resolvent is empty, we have derived a contradiction.
                         if len(resolvent) == 0:
-                            print("True")
                             return True 
                         
                         new_clauses.add(resolvent)
             
             if new_clauses.issubset(clauses):
-                print("False")
                 return False 
             
             clauses.update(new_clauses)
