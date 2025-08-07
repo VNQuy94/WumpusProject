@@ -2,6 +2,7 @@ from ResolutionEngine import ResolutionEngine
 from KnowledgeBase import KnowledgeBase
 from Planner import Planner
 from Cells import Cell
+import GameCoords
 
 # Create symbols for the Wumpus World
 def P(x, y): 
@@ -38,15 +39,16 @@ class Agent:
         self.direction = "East"
         self.has_arrow = True
         self.has_gold = False
+        self.bump = False
         self.action_count = 0
 
     def manhattan_distance(self, x, y):
-        return abs(self.current_pos[0] - x) + abs(self.current_pos[1] - y)
+        return abs(x - self.current_pos[0]) + abs(y - self.current_pos[1])
     
     def create_kb_world(self):
         self.kb_world = [[Cell(i, j) for j in range(self.size)] for i in range(self.size)]
-        self.kb_world[self.size - 1][0].is_safe = True
-        self.kb_world[self.size - 1][0].is_visited = True
+        self.kb_world[0][0].is_safe = True
+        self.kb_world[0][0].is_visited = True
         self.kb.tell(Not(P(0, 0)))
         self.kb.tell(Not(W(0, 0)))
 
@@ -116,32 +118,36 @@ class Agent:
             self.kb.tell(Glitter(x, y))
             self.add_gold_rules(x, y)
 
-    def agent_update_state(self, action, percepts):
+    def agent_update_state(self, action):
         x, y = self.current_pos
 
         directions = ["East", "South", "West", "North"]
         agent_direction_index = directions.index(self.direction)
 
-        if action == "Turn left":
+        if action == "Turn Left":
             self.direction = directions[(agent_direction_index - 1) % 4]
             
-        if action == "Turn right":
+        if action == "Turn Right":
             self.direction = directions[(agent_direction_index + 1) % 4]
 
         if action == "Move Forward":
             if self.direction == "East":
-                y += 1
+                if y < self.size - 1:
+                    y += 1
 
             elif self.direction == "West":
-                y -= 1
+                if y > 0:
+                    y -= 1
 
             elif self.direction == "South":
-                x -= 1
+                if x > self.size - 1:
+                    x -= 1
 
             elif self.direction == "North":
-                x += 1
+                if x < self.size - 1:
+                    x += 1
 
-        self.current_pos = (x, y) 
+        self.current_pos = (x, y)
         self.kb_world[x][y].set_is_visited(True)
 
     def find_goal(self):
@@ -161,7 +167,6 @@ class Agent:
             if self.direction == "East":
                 if (x, y + 1) in safe_unvisited:
                     return (x, y + 1)
-
             elif self.direction == "West":
                 if (x, y - 1) in safe_unvisited:
                     return (x, y - 1)
@@ -185,7 +190,7 @@ class Agent:
         self.perceive_and_update(percepts)
 
         # Kiểm tra và nhặt vàng nếu có
-        if percepts[2]:  # Glitter = True
+        if percepts[2] and not self.has_gold:  # Glitter = True
             self.has_gold = True
             self.actions = []  # Xóa danh sách hành động để lập kế hoạch mới
             return "Grab"

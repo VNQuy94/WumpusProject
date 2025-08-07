@@ -1,4 +1,5 @@
 import random
+import GameCoords
 
 # Constants
 NUM_GOLD = 1
@@ -23,7 +24,8 @@ class World:
         self.action_count = 0  # Đếm số hành động để hỗ trợ Moving Wumpus
 
     def is_not_origin(self, row, col):
-        return (row != 0 or col != 0)
+        start_row, start_col = GameCoords.game_to_array_coords(0, 0, self.size)
+        return (row != start_row or col != start_col)
 
     def create_world(self):
         # Initialize world
@@ -82,8 +84,10 @@ class World:
                             else:
                                 world[new_row][new_col] += BREEZE
 
-    def get_percepts(self, row, col):
+    def get_percepts(self, x, y):
         """Trả về percepts tại ô (row, col)"""
+        row, col = GameCoords.game_to_array_coords(x, y, self.size)
+
         stench = STENCH in self.world[row][col]
         breeze = BREEZE in self.world[row][col]
         glitter = GOLD in self.world[row][col]
@@ -92,12 +96,14 @@ class World:
     def perform_agent_action(self, action):
         percepts = self.get_percepts(self.agent_position[0], self.agent_position[1])
         x, y = self.agent_position
+        row, col = GameCoords.game_to_array_coords(x, y, self.size)
         
         if action == "Grab":
-            if GOLD in self.world[x][y]:
-                self.world[x][y] = self.world[x][y].replace(GOLD, EMPTY)
-                print(f"Agent nhặt vàng tại ({x}, {y})")
-                return percepts + [False]
+            if GOLD in self.world[row][col]:
+                self.world[row][col] = self.world[row][col].replace(GOLD, EMPTY)
+                print(f"Agent đã nhặt vàng tại ({x}, {y})")
+                return percepts + [True]
+            
             
         elif action == "Move Forward":
             if self.agent_direction == "East":
@@ -121,10 +127,10 @@ class World:
                     self.agent_position = (x - 1, y)
 
             # Kiểm tra va chạm với Wumpus hoặc Pit
-            if WUMPUS in self.world[self.agent_position[0]][self.agent_position[1]]:
+            if WUMPUS in self.world[row][col]:
                 print(f"Agent bị Wumpus giết tại ({self.agent_position[0]}, {self.agent_position[1]})")
                 return None
-            elif PIT in self.world[self.agent_position[0]][self.agent_position[1]]:
+            elif PIT in self.world[row][col]:
                 print(f"Agent rơi vào Pit tại ({self.agent_position[0]}, {self.agent_position[1]})")
                 return None
             
@@ -143,34 +149,34 @@ class World:
         if action == "Shoot":
             # Kiểm tra theo hướng của agent
             if self.agent_direction == "East":
-                for j in range(y + 1, self.size):
-                    if WUMPUS in self.world[x][j]:
-                        self.world[x][j] = self.world[x][j].replace(WUMPUS, EMPTY)
-                        self.clear_effects(x, j, STENCH)
+                for j in range(col, self.size):
+                    if WUMPUS in self.world[row][j]:
+                        self.world[row][j] = self.world[row][j].replace(WUMPUS, EMPTY)
+                        self.clear_effects(row, j, STENCH)
                         print(f"Mũi tên trúng Wumpus tại ({x}, {j})")
                         return percepts + [True]
                     
             elif self.agent_direction == "West":
                 for j in range(y - 1, -1, -1):
-                    if WUMPUS in self.world[x][j]:
-                        self.world[x][j] = self.world[x][j].replace(WUMPUS, EMPTY)
-                        self.clear_effects(x, j, STENCH)
+                    if WUMPUS in self.world[row][j]:
+                        self.world[row][j] = self.world[row][j].replace(WUMPUS, EMPTY)
+                        self.clear_effects(row, j, STENCH)
                         print(f"Mũi tên trúng Wumpus tại ({x}, {j})")
                         return percepts + [True]
                     
             elif self.agent_direction == "North":
-                for i in range(x + 1, self.size):
-                    if WUMPUS in self.world[i][y]:
-                        self.world[i][y] = self.world[i][y].replace(WUMPUS, EMPTY)
-                        self.clear_effects(i, y, STENCH)
+                for i in range(row - 1, self.size):
+                    if WUMPUS in self.world[i][col]:
+                        self.world[i][col] = self.world[i][col].replace(WUMPUS, EMPTY)
+                        self.clear_effects(i, col, STENCH)
                         print(f"Mũi tên trúng Wumpus tại ({i}, {y})")
                         return percepts + [True]
             
             elif self.agent_direction == "South":
-                for i in range(x - 1, -1, -1):
-                    if WUMPUS in self.world[i][y]:
-                        self.world[i][y] = self.world[i][y].replace(WUMPUS, EMPTY)
-                        self.clear_effects(i, y, STENCH)
+                for i in range(row + 1):
+                    if WUMPUS in self.world[i][col]:
+                        self.world[i][col] = self.world[i][col].replace(WUMPUS, EMPTY)
+                        self.clear_effects(i, col, STENCH)
                         print(f"Mũi tên trúng Wumpus tại ({i}, {y})")
                         return percepts + [True]
             
@@ -207,12 +213,18 @@ class World:
                     self.world[new_row][new_col] = self.world[new_row][new_col].replace(STENCH, EMPTY)
 
     def __str__(self):
-        """Hiển thị lưới cho visualization"""
-        result = []
-        for i in range(self.size):  # In từ dưới lên
-            row = [self.world[i][j] for j in range(self.size)]
-            result.append(" ".join(row))
-        return "\n".join(result)
+    
+        # Tạo một danh sách các chuỗi, mỗi chuỗi là một hàng của thế giới
+        # Dùng list comprehension để code ngắn gọn
+        map_rows = []
+        for r in range(self.size):
+            # Nối các phần tử trong một hàng bằng dấu cách
+            # Dùng str.ljust() để mỗi ô có chiều rộng cố định, giúp căn chỉnh đẹp hơn
+            formatted_row = [cell.ljust(4) for cell in self.world[r]]
+            map_rows.append("".join(formatted_row))
+        
+        # Nối tất cả các hàng lại với nhau bằng ký tự xuống dòng
+        return "\n".join(map_rows)
     
 if __name__ == "__main__":
     world = World()

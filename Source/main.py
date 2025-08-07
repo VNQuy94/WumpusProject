@@ -19,19 +19,22 @@ if __name__ == "__main__":
 
     print(wumpus_world)
 
+    count = 0
     # Vòng lặp chính của trò chơi
-    while True:
+    while count < 10:
         action = agent.make_decision(percepts)
         print(f"Action: {action}")
         
         if action == "Climb":
             print("Agent đã leo ra khỏi hố!")
-            #break
+            break
         
         if action:
-            agent.agent_update_state(action, percepts)
+            agent.agent_update_state(action)
             percepts = wumpus_world.perform_agent_action(action)
             print("Updated Percepts:", percepts)
 
             if percepts is None:
                 break
+        
+        count += 1
