@@ -18,6 +18,8 @@ class World:
         self.num_wumpus = num_wumpus
         self.p_pit = p_pit
         self.world = self.create_world()
+        self.agent_position = (0, 0)  # Vị trí của agent
+        self.agent_direction = "East"  # Hướng của agent
         self.action_count = 0  # Đếm số hành động để hỗ trợ Moving Wumpus
 
     def is_not_origin(self, row, col):
@@ -78,72 +80,99 @@ class World:
 
     def get_percepts(self, row, col):
         """Trả về percepts tại ô (row, col)"""
-        percepts = [False, False, False] # Stench, Breeze, Glitter
-        string = self.world[row][col]
-
-        for i in range(len(string)):
-            if string[i] == STENCH:
-                percepts[0] = True
-            if string[i] == BREEZE:
-                percepts[1] = True
-            if string[i] == GOLD:
-                percepts[2] = True
-
-        return percepts
+        if row < 0 or row >= self.size or col < 0 or col >= self.size:
+            return [False, False, False, True]
+        
+        stench = STENCH in self.world[row][col]
+        breeze = BREEZE in self.world[row][col]
+        glitter = GOLD in self.world[row][col]
+        bump = False
+        return [stench, breeze, glitter, bump]
     
-    def check_agent_action(self, x, y, direction, action):
+    def perform_agent_action(self, action):
+        percepts = self.get_percepts(self.agent_position[0], self.agent_position[1])
+        x, y = self.agent_position
+        
         if action == "Grab":
             if GOLD in self.world[x][y]:
                 self.world[x][y] = self.world[x][y].replace(GOLD, EMPTY)
                 print(f"Agent nhặt vàng tại ({x}, {y})")
-                return True
+                return percepts + [False]
+            
+        elif action == "Move Forward":
+            if self.agent_direction == "East":
+                percepts = self.get_percepts(x + 1, y)
+                if x + 1 < self.size:
+                    self.agent_position = (x + 1, y)
 
-        elif action == "Shoot":
-            hit_wumpus = False
+            elif self.agent_direction == "West":
+                percepts = self.get_percepts(x - 1, y)
+                if x - 1 >= 0:
+                    self.agent_position = (x - 1, y)
+
+            elif self.agent_direction == "North":
+                percepts = self.get_percepts(x, y + 1)
+                if y + 1 < self.size:
+                    self.agent_position = (x, y + 1)
+
+            elif self.agent_direction == "South":
+                percepts = self.get_percepts(x, y - 1)
+                if y - 1 >= 0:
+                    self.agent_position = (x, y - 1)
+
+            # Kiểm tra va chạm với Wumpus hoặc Pit
+            if WUMPUS in self.world[self.agent_position[0]][self.agent_position[1]]:
+                print(f"Agent bị Wumpus giết tại ({self.agent_position[0]}, {self.agent_position[1]})")
+                return None
+            elif PIT in self.world[self.agent_position[0]][self.agent_position[1]]:
+                print(f"Agent rơi vào Pit tại ({self.agent_position[0]}, {self.agent_position[1]})")
+                return None
+            
+            return percepts + [False]
+
+        direction_list = ["East", "South", "West", "North"]
+        direction_index = direction_list.index(self.agent_direction)
+        if action == "Turn Left":
+            self.agent_direction = direction_list[(direction_index - 1) % 4]
+            return percepts + [False]
+
+        if action == "Turn Right":
+            self.agent_direction = direction_list[(direction_index + 1) % 4]
+            return percepts + [False]
+        
+        if action == "Shoot":
             # Kiểm tra theo hướng của agent
-            if direction == "East":
+            if self.agent_direction == "East":
                 for i in range(x + 1, self.size):
                     if WUMPUS in self.world[i][y]:
                         self.world[i][y] = self.world[i][y].replace(WUMPUS, EMPTY)
                         self.clear_effects(i, y, STENCH)
                         print(f"Mũi tên trúng Wumpus tại ({i}, {y})")
-                        hit_wumpus = True
-                        break
-            elif direction == "West":
+                        return percepts + [True]
+                    
+            elif self.agent_direction == "West":
                 for i in range(x - 1, -1, -1):
                     if WUMPUS in self.world[i][y]:
                         self.world[i][y] = self.world[i][y].replace(WUMPUS, EMPTY)
                         self.clear_effects(i, y, STENCH)
                         print(f"Mũi tên trúng Wumpus tại ({i}, {y})")
-                        hit_wumpus = True
-                        break
-            elif direction == "North":
+                        return percepts + [True]
+                    
+            elif self.agent_direction == "North":
                 for j in range(y + 1, self.size):
                     if WUMPUS in self.world[x][j]:
                         self.world[x][j] = self.world[x][j].replace(WUMPUS, EMPTY)
                         self.clear_effects(x, j, STENCH)
                         print(f"Mũi tên trúng Wumpus tại ({x}, {j})")
-                        hit_wumpus = True
-                        break
-            elif direction == "South":
+                        return percepts + [True]
+            
+            elif self.agent_direction == "South":
                 for j in range(y - 1, -1, -1):
                     if WUMPUS in self.world[x][j]:
                         self.world[x][j] = self.world[x][j].replace(WUMPUS, EMPTY)
                         self.clear_effects(x, j, STENCH)
                         print(f"Mũi tên trúng Wumpus tại ({x}, {j})")
-                        hit_wumpus = True
-                        break
-
-            if hit_wumpus:
-                return True
-            else:
-                return False
-
-    def check_agent_position(self, x, y):
-        if WUMPUS in self.world[x][y] and PIT in self.world[x][y]:
-            return False
-        else:
-            return True
+                        return percepts + [True]
             
     def move_wumpus(self):
         """Di chuyển Wumpus (cho chế độ Moving Wumpus)"""
