@@ -1,8 +1,4 @@
-<<<<<<< HEAD
-from Solution import InferenceEngine
-=======
 from ResolutionEngine import ResolutionEngine
->>>>>>> 8c3369964ad6fa83eacbf21e1eeaf7379a79efec
 from KnowledgeBase import KnowledgeBase
 from Planner import Planner
 from Cells import Cell
