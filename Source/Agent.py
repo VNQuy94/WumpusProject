@@ -38,7 +38,6 @@ class Agent:
         self.direction = "East"
         self.has_arrow = True
         self.has_gold = False
-        self.bump = False
         self.action_count = 0
 
     def manhattan_distance(self, x, y):
@@ -46,8 +45,8 @@ class Agent:
     
     def create_kb_world(self):
         self.kb_world = [[Cell(i, j) for j in range(self.size)] for i in range(self.size)]
-        self.kb_world[0][0].is_safe = True
-        self.kb_world[0][0].is_visited = True
+        self.kb_world[self.size - 1][0].is_safe = True
+        self.kb_world[self.size - 1][0].is_visited = True
         self.kb.tell(Not(P(0, 0)))
         self.kb.tell(Not(W(0, 0)))
 
@@ -119,7 +118,6 @@ class Agent:
 
     def agent_update_state(self, action, percepts):
         x, y = self.current_pos
-        bump = percepts[3]
 
         directions = ["East", "South", "West", "North"]
         agent_direction_index = directions.index(self.direction)
@@ -130,18 +128,18 @@ class Agent:
         if action == "Turn right":
             self.direction = directions[(agent_direction_index + 1) % 4]
 
-        if action == "Move Forward" and not bump:
+        if action == "Move Forward":
             if self.direction == "East":
-                x += 1
+                y += 1
 
             elif self.direction == "West":
-                x -= 1
-
-            elif self.direction == "South":
                 y -= 1
 
+            elif self.direction == "South":
+                x -= 1
+
             elif self.direction == "North":
-                y += 1
+                x += 1
 
         self.current_pos = (x, y) 
         self.kb_world[x][y].set_is_visited(True)
@@ -161,20 +159,20 @@ class Agent:
             # Tìm ô an toàn gần nhất và thuận hướng agent nhất
             x, y = self.current_pos
             if self.direction == "East":
-                if (x + 1, y) in safe_unvisited:
-                    return (x + 1, y)
+                if (x, y + 1) in safe_unvisited:
+                    return (x, y + 1)
 
             elif self.direction == "West":
-                if (x - 1, y) in safe_unvisited:
-                    return (x - 1, y)
-
-            elif self.direction == "South":
                 if (x, y - 1) in safe_unvisited:
                     return (x, y - 1)
 
+            elif self.direction == "South":
+                if (x - 1, y) in safe_unvisited:
+                    return (x - 1, y)
+
             elif self.direction == "North":
-                if (x, y + 1) in safe_unvisited:
-                    return (x, y + 1)
+                if (x + 1, y) in safe_unvisited:
+                    return (x + 1, y)
             
             return safe_unvisited[0]  # Trả về ô an toàn gần nhất nếu không có ô thuận hướng
         

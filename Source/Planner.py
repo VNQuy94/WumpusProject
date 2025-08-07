@@ -4,7 +4,7 @@ from collections import defaultdict
 class Planner:
     def __init__(self, size):
         self.size = size
-        self.directions = ["East", "North", "West", "South"]
+        self.directions = ["East", "South", "West", "North"]
 
     def manhattan_distance(self, x1, y1, x2, y2):
         return abs(x1 - x2) + abs(y1 - y2)
@@ -20,18 +20,18 @@ class Planner:
         dir_idx = self.directions.index(direction)
 
         # Move Forward (chỉ đến ô an toàn)
-        if direction == "East" and x < self.size - 1:
-            if kb_world[x + 1][y].is_safe:
-                neighbors.append(((x + 1, y, direction), "Move Forward", 1))
-        elif direction == "West" and x > 0:
-            if kb_world[x - 1][y].is_safe:
-                neighbors.append(((x - 1, y, direction), "Move Forward", 1))
-        elif direction == "North" and y < self.size - 1:
+        if direction == "East" and y < self.size - 1:
             if kb_world[x][y + 1].is_safe:
                 neighbors.append(((x, y + 1, direction), "Move Forward", 1))
-        elif direction == "South" and y > 0:
+        elif direction == "West" and y > 0:
             if kb_world[x][y - 1].is_safe:
                 neighbors.append(((x, y - 1, direction), "Move Forward", 1))
+        elif direction == "North" and x < self.size - 1:
+            if kb_world[x + 1][y].is_safe:
+                neighbors.append(((x + 1, y, direction), "Move Forward", 1))
+        elif direction == "South" and x > 0:
+            if kb_world[x - 1][y].is_safe:
+                neighbors.append(((x - 1, y, direction), "Move Forward", 1))
 
         # Turn Left
         new_dir = self.directions[(dir_idx - 1) % 4]
@@ -46,11 +46,10 @@ class Planner:
     def plan(self, start_state, goal_position, kb_world):
         """
         Thuật toán A* để tìm đường đi tối ưu dựa trên cơ sở tri thức và trạng thái môi trường.
-        start_state: (x, y, direction, has_gold, action_count)
+        start_state: (x, y, direction)
         kb_world: World object để kiểm tra trạng thái môi trường
         Returns: List of action representing the plan
         """
-        
         open_list = [(0, start_state, [])]  # (f_score, state, actions)
         visited_states = set()
         g_score = defaultdict(lambda: float('inf'))
@@ -59,8 +58,8 @@ class Planner:
         f_score[start_state] = self.manhattan_distance(start_state[0], start_state[1], goal_position[0], goal_position[1])
 
         while open_list:
-            current_f, current_state, actions = heappop(open_list)
-            x, y, direction = current_state
+            _, current_state, actions = heappop(open_list)
+            x, y, _ = current_state
 
             # Kiểm tra mục tiêu
             if (x, y) == goal_position:
@@ -82,6 +81,6 @@ class Planner:
                     h_score = self.manhattan_distance(next_state[0], next_state[1], goal_position[0], goal_position[1])
 
                     f_score[next_state] = tentative_g_score + h_score
-                    heappush(open_list, (f_score[next_state], next_state, actions + [(action, next_state)]))
+                    heappush(open_list, (f_score[next_state], next_state, actions + [action]))
 
         return []  # Trả về rỗng nếu không tìm thấy đường đi

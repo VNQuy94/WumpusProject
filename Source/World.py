@@ -27,7 +27,7 @@ class World:
 
     def create_world(self):
         # Initialize world
-        self.world = [['.' for _ in range(self.size)] for _ in range(self.size)]
+        world = [['.' for _ in range(self.size)] for _ in range(self.size)]
 
         # Randomly place Wumpus, avoiding (0,0)
         wumpus_count = 0
@@ -35,59 +35,59 @@ class World:
             row = random.randint(0, self.size - 1)
             col = random.randint(0, self.size - 1)
 
-            if self.is_not_origin(row, col) and not self.world[row][col] == WUMPUS:
-                self.world[row][col] = WUMPUS
-                self.add_effect(row, col, STENCH)
+            if self.is_not_origin(row, col) and not world[row][col] == WUMPUS:
+                world[row][col] = WUMPUS
+                self.add_effect(world, row, col, STENCH)
                 wumpus_count += 1
 
         # Randomly place pits based on p_pit
         for i in range(self.size):
             for j in range(self.size):
-                if self.is_not_origin(i, j) and random.random() <= self.p_pit and not self.world[i][j] == WUMPUS:
-                    if not self.world[i][j] == BREEZE and not self.world[i][j] == STENCH:
-                        self.world[i][j] = PIT
-                        self.add_effect(i, j, BREEZE)
+                if self.is_not_origin(i, j) and random.random() <= self.p_pit and not world[i][j] == WUMPUS:
+                    if not world[i][j] == BREEZE and not world[i][j] == STENCH:
+                        world[i][j] = PIT
+                        self.add_effect(world, i, j, BREEZE)
 
         # Randomly place gold in an empty cell
         gold_count = 0
         while gold_count < self.num_gold:
             row = random.randint(0, self.size - 1)
             col = random.randint(0, self.size - 1)
-            if not (self.world[row][col] == WUMPUS or self.world[row][col] == PIT):
-                self.world[row][col] = GOLD
-                gold_count += 1
+            if not (world[row][col] == WUMPUS or world[row][col] == PIT):
+                if EMPTY in world[row][col]:
+                    world[row][col] = GOLD
+                    gold_count += 1
+                else:
+                    world[row][col] += GOLD
+                    gold_count += 1
+        
+        return world
 
-        return self.world
-
-    def add_effect(self, row, col, effect):
+    def add_effect(self, world, row, col, effect):
         directions = [(-1, 0), (1, 0), (0, -1), (0, 1)]  # Up, Down, Left, Right
         for dr, dc in directions:
             new_row, new_col = row + dr, col + dc
             if 0 <= new_row < self.size and 0 <= new_col < self.size:
-                    if effect == STENCH and STENCH not in self.world[new_row][new_col]:
-                        if not WUMPUS in self.world[new_row][new_col] and not PIT in self.world[new_row][new_col]:
-                            if EMPTY in self.world[new_row][new_col]:
-                                self.world[new_row][new_col] = STENCH
+                    if effect == STENCH and STENCH not in world[new_row][new_col]:
+                        if not WUMPUS in world[new_row][new_col] and not PIT in world[new_row][new_col]:
+                            if EMPTY in world[new_row][new_col]:
+                                world[new_row][new_col] = STENCH
                             else:
-                                self.world[new_row][new_col] += STENCH
+                                world[new_row][new_col] += STENCH
 
-                    elif effect == BREEZE and BREEZE not in self.world[new_row][new_col]:
-                        if not WUMPUS in self.world[new_row][new_col] and not PIT in self.world[new_row][new_col]:
-                            if EMPTY in self.world[new_row][new_col]:
-                                self.world[new_row][new_col] = BREEZE
+                    elif effect == BREEZE and BREEZE not in world[new_row][new_col]:
+                        if not WUMPUS in world[new_row][new_col] and not PIT in world[new_row][new_col]:
+                            if EMPTY in world[new_row][new_col]:
+                                world[new_row][new_col] = BREEZE
                             else:
-                                self.world[new_row][new_col] += BREEZE
+                                world[new_row][new_col] += BREEZE
 
     def get_percepts(self, row, col):
         """Trả về percepts tại ô (row, col)"""
-        if row < 0 or row >= self.size or col < 0 or col >= self.size:
-            return [False, False, False, True]
-        
         stench = STENCH in self.world[row][col]
         breeze = BREEZE in self.world[row][col]
         glitter = GOLD in self.world[row][col]
-        bump = False
-        return [stench, breeze, glitter, bump]
+        return [stench, breeze, glitter]
     
     def perform_agent_action(self, action):
         percepts = self.get_percepts(self.agent_position[0], self.agent_position[1])
@@ -101,24 +101,24 @@ class World:
             
         elif action == "Move Forward":
             if self.agent_direction == "East":
-                percepts = self.get_percepts(x + 1, y)
-                if x + 1 < self.size:
-                    self.agent_position = (x + 1, y)
-
-            elif self.agent_direction == "West":
-                percepts = self.get_percepts(x - 1, y)
-                if x - 1 >= 0:
-                    self.agent_position = (x - 1, y)
-
-            elif self.agent_direction == "North":
                 percepts = self.get_percepts(x, y + 1)
                 if y + 1 < self.size:
                     self.agent_position = (x, y + 1)
 
-            elif self.agent_direction == "South":
+            elif self.agent_direction == "West":
                 percepts = self.get_percepts(x, y - 1)
                 if y - 1 >= 0:
                     self.agent_position = (x, y - 1)
+
+            elif self.agent_direction == "North":
+                percepts = self.get_percepts(x + 1, y)
+                if x + 1 < self.size:
+                    self.agent_position = (x + 1, y)
+
+            elif self.agent_direction == "South":
+                percepts = self.get_percepts(x - 1, y)
+                if x - 1 >= 0:
+                    self.agent_position = (x - 1, y)
 
             # Kiểm tra va chạm với Wumpus hoặc Pit
             if WUMPUS in self.world[self.agent_position[0]][self.agent_position[1]]:
@@ -143,35 +143,35 @@ class World:
         if action == "Shoot":
             # Kiểm tra theo hướng của agent
             if self.agent_direction == "East":
-                for i in range(x + 1, self.size):
-                    if WUMPUS in self.world[i][y]:
-                        self.world[i][y] = self.world[i][y].replace(WUMPUS, EMPTY)
-                        self.clear_effects(i, y, STENCH)
-                        print(f"Mũi tên trúng Wumpus tại ({i}, {y})")
-                        return percepts + [True]
-                    
-            elif self.agent_direction == "West":
-                for i in range(x - 1, -1, -1):
-                    if WUMPUS in self.world[i][y]:
-                        self.world[i][y] = self.world[i][y].replace(WUMPUS, EMPTY)
-                        self.clear_effects(i, y, STENCH)
-                        print(f"Mũi tên trúng Wumpus tại ({i}, {y})")
-                        return percepts + [True]
-                    
-            elif self.agent_direction == "North":
                 for j in range(y + 1, self.size):
                     if WUMPUS in self.world[x][j]:
                         self.world[x][j] = self.world[x][j].replace(WUMPUS, EMPTY)
                         self.clear_effects(x, j, STENCH)
                         print(f"Mũi tên trúng Wumpus tại ({x}, {j})")
                         return percepts + [True]
-            
-            elif self.agent_direction == "South":
+                    
+            elif self.agent_direction == "West":
                 for j in range(y - 1, -1, -1):
                     if WUMPUS in self.world[x][j]:
                         self.world[x][j] = self.world[x][j].replace(WUMPUS, EMPTY)
                         self.clear_effects(x, j, STENCH)
                         print(f"Mũi tên trúng Wumpus tại ({x}, {j})")
+                        return percepts + [True]
+                    
+            elif self.agent_direction == "North":
+                for i in range(x + 1, self.size):
+                    if WUMPUS in self.world[i][y]:
+                        self.world[i][y] = self.world[i][y].replace(WUMPUS, EMPTY)
+                        self.clear_effects(i, y, STENCH)
+                        print(f"Mũi tên trúng Wumpus tại ({i}, {y})")
+                        return percepts + [True]
+            
+            elif self.agent_direction == "South":
+                for i in range(x - 1, -1, -1):
+                    if WUMPUS in self.world[i][y]:
+                        self.world[i][y] = self.world[i][y].replace(WUMPUS, EMPTY)
+                        self.clear_effects(i, y, STENCH)
+                        print(f"Mũi tên trúng Wumpus tại ({i}, {y})")
                         return percepts + [True]
             
     def move_wumpus(self):
@@ -209,7 +209,7 @@ class World:
     def __str__(self):
         """Hiển thị lưới cho visualization"""
         result = []
-        for i in range(self.size - 1, -1, -1):  # In từ trên xuống
+        for i in range(self.size):  # In từ dưới lên
             row = [self.world[i][j] for j in range(self.size)]
             result.append(" ".join(row))
         return "\n".join(result)
