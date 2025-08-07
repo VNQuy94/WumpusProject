@@ -15,36 +15,31 @@ class Planner:
         state: (x, y, direction, has_arrow, has_gold, action_count)
         kb_world: World object để kiểm tra trạng thái môi trường
         """
-        x, y, direction, has_gold, action_count = state
+        x, y, direction, has_arrow, has_gold, action_count = state
         neighbors = []
         dir_idx = self.directions.index(direction)
 
         # Move Forward (chỉ đến ô an toàn)
         if direction == "East" and x < self.size - 1:
-<<<<<<< HEAD
-            if kb_world[x + 1][y].is_safe:  
-                neighbors.append(((x + 1, y, direction, has_arrow, has_gold, action_count + 1), "Move Forward", 1))
-=======
             if kb_world[x + 1][y].is_safe:
-                neighbors.append(((x + 1, y, direction, has_gold, action_count + 1), "Move Forward", 1))
->>>>>>> 8c3369964ad6fa83eacbf21e1eeaf7379a79efec
+                neighbors.append(((x + 1, y, direction, has_arrow, has_gold, action_count + 1), "Move Forward", 1))
         elif direction == "West" and x > 0:
             if kb_world[x - 1][y].is_safe:
-                neighbors.append(((x - 1, y, direction, has_gold, action_count + 1), "Move Forward", 1))
+                neighbors.append(((x - 1, y, direction, has_arrow, has_gold, action_count + 1), "Move Forward", 1))
         elif direction == "North" and y < self.size - 1:
             if kb_world[x][y + 1].is_safe:
-                neighbors.append(((x, y + 1, direction, has_gold, action_count + 1), "Move Forward", 1))
+                neighbors.append(((x, y + 1, direction, has_arrow, has_gold, action_count + 1), "Move Forward", 1))
         elif direction == "South" and y > 0:
             if kb_world[x][y - 1].is_safe:
-                neighbors.append(((x, y - 1, direction, has_gold, action_count + 1), "Move Forward", 1))
+                neighbors.append(((x, y - 1, direction, has_arrow, has_gold, action_count + 1), "Move Forward", 1))
 
         # Turn Left
         new_dir = self.directions[(dir_idx - 1) % 4]
-        neighbors.append(((x, y, new_dir, has_gold, action_count + 1), "Turn Left", 1))
+        neighbors.append(((x, y, new_dir, has_arrow, has_gold, action_count + 1), "Turn Left", 1))
 
         # Turn Right
         new_dir = self.directions[(dir_idx + 1) % 4]
-        neighbors.append(((x, y, new_dir, has_gold, action_count + 1), "Turn Right", 1))
+        neighbors.append(((x, y, new_dir, has_arrow, has_gold, action_count + 1), "Turn Right", 1))
 
         return neighbors
 
