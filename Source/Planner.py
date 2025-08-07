@@ -15,61 +15,70 @@ class Planner:
         state: (x, y, direction, has_arrow, has_gold, action_count)
         kb_world: World object để kiểm tra trạng thái môi trường
         """
-        x, y, direction, has_arrow, has_gold, action_count = state
+        x, y, direction, has_gold, action_count = state
         neighbors = []
         dir_idx = self.directions.index(direction)
 
         # Move Forward (chỉ đến ô an toàn)
         if direction == "East" and x < self.size - 1:
+<<<<<<< HEAD
             if kb_world[x + 1][y].is_safe:  
                 neighbors.append(((x + 1, y, direction, has_arrow, has_gold, action_count + 1), "Move Forward", 1))
+=======
+            if kb_world[x + 1][y].is_safe:
+                neighbors.append(((x + 1, y, direction, has_gold, action_count + 1), "Move Forward", 1))
+>>>>>>> 8c3369964ad6fa83eacbf21e1eeaf7379a79efec
         elif direction == "West" and x > 0:
             if kb_world[x - 1][y].is_safe:
-                neighbors.append(((x - 1, y, direction, has_arrow, has_gold, action_count + 1), "Move Forward", 1))
+                neighbors.append(((x - 1, y, direction, has_gold, action_count + 1), "Move Forward", 1))
         elif direction == "North" and y < self.size - 1:
             if kb_world[x][y + 1].is_safe:
-                neighbors.append(((x, y + 1, direction, has_arrow, has_gold, action_count + 1), "Move Forward", 1))
+                neighbors.append(((x, y + 1, direction, has_gold, action_count + 1), "Move Forward", 1))
         elif direction == "South" and y > 0:
             if kb_world[x][y - 1].is_safe:
-                neighbors.append(((x, y - 1, direction, has_arrow, has_gold, action_count + 1), "Move Forward", 1))
+                neighbors.append(((x, y - 1, direction, has_gold, action_count + 1), "Move Forward", 1))
 
         # Turn Left
         new_dir = self.directions[(dir_idx - 1) % 4]
-        neighbors.append(((x, y, new_dir, has_arrow, has_gold, action_count + 1), "Turn Left", 1))
+        neighbors.append(((x, y, new_dir, has_gold, action_count + 1), "Turn Left", 1))
 
         # Turn Right
         new_dir = self.directions[(dir_idx + 1) % 4]
-        neighbors.append(((x, y, new_dir, has_arrow, has_gold, action_count + 1), "Turn Right", 1))
+        neighbors.append(((x, y, new_dir, has_gold, action_count + 1), "Turn Right", 1))
 
         return neighbors
 
     def plan(self, start_state, kb_world):
         """
         Thuật toán A* để tìm đường đi tối ưu dựa trên cơ sở tri thức và trạng thái môi trường.
-        start_state: (x, y, direction, has_arrow, has_gold, action_count)
+        start_state: (x, y, direction, has_gold, action_count)
         kb_world: World object để kiểm tra trạng thái môi trường
         Returns: List of action representing the plan
         """
         goal = None
 
-        # Ưu tiên các ô an toàn chưa thăm
-        safe_unvisited = [(x, y) for x in range(self.size) for y in range(self.size)
-                        if kb_world[x][y].is_safe and not kb_world[x][y].is_visited]
-
-        if safe_unvisited:
-            goal = min(safe_unvisited,
-                    key=lambda p: self.manhattan_distance(start_state[0], start_state[1], p[0], p[1]))
-            
+        if start_state[3]:
+            goal = (0,0)
+        
         else:
-            # Nếu không còn ô chưa thăm, chọn ô an toàn gần nhất
-            safe_cells = [(x, y) for x in range(self.size) for y in range(self.size)
-                        if kb_world[x][y].is_safe]
-            
-            if not safe_cells:
-                return []  # Không còn chỗ nào để đi
-            
-            goal = min(safe_cells,
-                    key=lambda p: self.manhattan_distance(start_state[0], start_state[1], p[0], p[1]))
+            # Ưu tiên các ô an toàn chưa thăm
+            safe_unvisited = [(x, y) for x in range(self.size) for y in range(self.size)
+                            if kb_world[x][y].is_safe and not kb_world[x][y].is_visited]
+
+            if safe_unvisited:
+                goal = min(safe_unvisited,
+                        key=lambda p: self.manhattan_distance(start_state[0], start_state[1], p[0], p[1]))
+                
+            else:
+                # Nếu không còn ô chưa thăm, chọn ô an toàn gần nhất
+                safe_cells = [(x, y) for x in range(self.size) for y in range(self.size)
+                            if kb_world[x][y].is_safe]
+                
+                if not safe_cells:
+                    return []  # Không còn chỗ nào để đi
+                
+                goal = min(safe_cells,
+                        key=lambda p: self.manhattan_distance(start_state[0], start_state[1], p[0], p[1]))
 
         open_list = [(0, start_state, [])]  # (f_score, state, actions)
         visited_states = set()
@@ -102,11 +111,8 @@ class Planner:
                     h_score = self.manhattan_distance(next_state[0], next_state[1], goal[0], goal[1])
 
                     # Điều chỉnh h_score để ưu tiên nhặt vàng hoặc quay về
-                    if next_state[4]:  # Nếu đã có vàng
+                    if next_state[3]:  # Nếu đã có vàng
                         h_score += 100  # Ưu tiên quay về (0,0)
-
-                    elif kb_world[next_state[0]][next_state[1]].has_glitter:
-                        h_score -= 100  # Ưu tiên nhặt vàng
 
                     f_score[next_state] = tentative_g_score + h_score
                     heappush(open_list, (f_score[next_state], next_state, actions + [(action, next_state)]))
