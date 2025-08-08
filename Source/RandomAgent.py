@@ -1,59 +1,71 @@
-import Agent
-import World
-import Action
-import time
-import tracemalloc
-from queue import PriorityQueue
-from collections import deque
+from heapq import heappush, heappop
+from collections import defaultdict, deque
 
-# BFS algorithm (from the old PJ1)
-def bfs_algorithm(gameboard: World):
-    #Start memory tracing
-    tracemalloc.start()
+class RandomAgent:
+    def __init__(self, size):
+        self.size = size
+        self.directions = ["East", "South", "West", "North"]
 
-    # Get start time currently
-    start = time.time()
+    def get_neighbors(self, state, kb_world):
+        """
+        Lấy danh sách các trạng thái hàng xóm hợp lệ từ trạng thái hiện tại.
+        state: (x, y, direction, has_arrow, has_gold, action_count)
+        kb_world: World object để kiểm tra trạng thái môi trường
+        """
+        x, y, direction = state
+        neighbors = []
+        dir_idx = self.directions.index(direction)
 
-    # Number of expanded nodes
-    expanded_nodes = 0
-    # Initialize the queue for BFS
-    queue = deque()
-    # Keep track of visited states to avoid cycles
-    visited = {}
+        # Move Forward (chỉ đến ô an toàn)
+        if direction == "East" and y < self.size - 1:
+            if kb_world[x][y + 1].is_safe:
+                neighbors.append(((x, y + 1, direction), "Move Forward", 1))
+        elif direction == "West" and y > 0:
+            if kb_world[x][y - 1].is_safe:
+                neighbors.append(((x, y - 1, direction), "Move Forward", 1))
+        elif direction == "North" and x < self.size - 1:
+            if kb_world[x + 1][y].is_safe:
+                neighbors.append(((x + 1, y, direction), "Move Forward", 1))
+        elif direction == "South" and x > 0:
+            if kb_world[x - 1][y].is_safe:
+                neighbors.append(((x - 1, y, direction), "Move Forward", 1))
 
-    # Add the start state to the queue and mark it as visited
-    queue.append(gameboard)
-    visited[gameboard] = (gameboard, None)
+        # Turn Left
+        new_dir = self.directions[(dir_idx - 1) % 4]
+        neighbors.append(((x, y, new_dir), "Turn Left", 1))
 
-    # While there are states to explore in the queue
-    while queue:
-        # Get the current state from the queue and increase the expanded nodes count
-        current_gameboard = queue.popleft()
-        expanded_nodes += 1
+        # Turn Right
+        new_dir = self.directions[(dir_idx + 1) % 4]
+        neighbors.append(((x, y, new_dir), "Turn Right", 1))
 
-        # Get the successors of the current state
-        for new_movess in current_gameboard.check_for_moves():
-            next_gameboard = World(gameboard, N=8, num_wumpus=2, p_pit=0.2)
-            # If the next state has not been visited yet
-            if next_gameboard not in visited:
-                # Check if the next state has solved the game
-                if next_gameboard.has_solved():
-                    end = time.time()
-                    _, peak = tracemalloc.get_traced_memory()
-                    tracemalloc.stop()
+        return neighbors
 
-                    path = helpFunctions.trace_back_solution(visited, gameboard, current_gameboard)
-                    path.append(next_gameboard)
+    def randomPlan(self, start_state, goal_position, kb_world):
+        """
+        Thuật toán BFS cho random agent.
+        start_state: (x, y, direction)
+        kb_world: World object để kiểm tra trạng thái môi trường
+        Returns: Danh sách hành động
+        """
+        queue = deque()
+        visited_states = set()
+        
+        queue.append([start_state, []])  # (state, actions)
+        visited_states[start_state] = (start_state, None)
+        
+        while queue:
+            current_state, actions = queue.popleft()
+            x, y, = current_state
+            
+            for next_state, action in self.get_neighbors(current_state, kb_world):
+                if next_state not in visited_states:
+                    # Kiểm tra mục tiêu
+                    if (x, y) == goal_position:
+                        return [action for action in actions]
+            
+                queue.append(next_state, action)
+                visited_states[next_state] = (next_state, current_state)
 
-                    return path, end-start, peak, expanded_nodes, len(path), None
-                
-                # If not solved, add the next state to the queue and mark it as visited
-                queue.append(next_gameboard)
-                visited[next_gameboard] = (next_gameboard, current_gameboard)
-
-    # If no solution is found, return None and print statistics
-    end = time.time()
-    _, peak = tracemalloc.get_traced_memory()
-    tracemalloc.stop()
+        return []  # Trả về rỗng nếu không tìm thấy đường đi
     
-    return None, end-start, peak, expanded_nodes, None, None
+
