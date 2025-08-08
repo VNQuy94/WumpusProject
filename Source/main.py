@@ -21,7 +21,7 @@ if __name__ == "__main__":
 
     count = 0
     # Vòng lặp chính của trò chơi
-    while count < 10:
+    while count < 100:
         action = agent.make_decision(percepts)
         print(f"Action: {action}")
         

@@ -140,7 +140,7 @@ class Agent:
                     y -= 1
 
             elif self.direction == "South":
-                if x > self.size - 1:
+                if x > 0:
                     x -= 1
 
             elif self.direction == "North":
@@ -213,11 +213,19 @@ class Agent:
             for nx, ny in neighbors:
                 is_safe_pit = self.engine.ask(self.kb, Not(P(nx, ny)))
                 is_safe_wumpus = self.engine.ask(self.kb, Not(W(nx, ny)))
+                have_wumpus = self.engine.ask(self.kb, W(nx, ny))
+
+                if self.has_arrow:
+                    if have_wumpus:
+                        self.has_arrow = False
+                        print(f"{nx, ny}", self.direction)
+                        print("Bắn chết con ma 2")
+                        return "Shoot"
 
                 # Cập nhật kb_world dựa trên kb
                 if is_safe_pit and is_safe_wumpus:
-                    self.kb_world[nx][ny].is_safe = True
-
+                     self.kb_world[nx][ny].is_safe = True
+                    
             # Tìm kiếm danh sách các hành động mới
             goal = self.find_goal()
             if goal is not None:
@@ -228,11 +236,7 @@ class Agent:
                     action = self.actions.pop(0)
             
             # Nếu danh sách hành động trả về là rỗng
-            else:
-                # Nếu vẫn chưa sử dụng mũi tên, bắn mũi tên theo vị trí và hướng đứng hiện tại
-                if self.has_arrow:
-                    self.has_arrow = False
-                    action = "Shoot"
-
+            #else:
                 # Trường hợp nếu không có cung tên
+        print(self.current_pos, self.direction)
         return action

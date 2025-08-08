@@ -102,8 +102,8 @@ class World:
             if GOLD in self.world[row][col]:
                 self.world[row][col] = self.world[row][col].replace(GOLD, EMPTY)
                 print(f"Agent đã nhặt vàng tại ({x}, {y})")
-                return percepts + [True]
-            
+                percepts = self.get_percepts(self.agent_position[0], self.agent_position[1])
+                return percepts + [False]            
             
         elif action == "Move Forward":
             if self.agent_direction == "East":
