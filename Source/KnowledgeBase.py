@@ -9,7 +9,17 @@ class KnowledgeBase:
     def add(self, clause):
         if not isinstance(clause, (list, tuple)):
             raise TypeError("Clause must be a list or tuple of literals.")
-        self.clauses.add(self._standardize_clause(clause))
+
+        standardized_clause = self._standardize_clause(clause)
+        if standardized_clause in self.clauses:
+            return
+        self.clauses.add(standardized_clause)
+
+    def remove(self, clause):
+        standardized_clause = self._standardize_clause(clause)
+        if standardized_clause not in self.clauses:
+            return
+        self.clauses.discard(standardized_clause)
 
     def tell(self, literal):
         self.add([literal])

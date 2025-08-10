@@ -126,6 +126,7 @@ class World:
                 if x - 1 >= 0:
                     self.agent_position = (x - 1, y)
 
+            row, col = GameCoords.game_to_array_coords(self.agent_position[0], self.agent_position[1], self.size)
             # Kiểm tra va chạm với Wumpus hoặc Pit
             if WUMPUS in self.world[row][col]:
                 print(f"Agent bị Wumpus giết tại ({self.agent_position[0]}, {self.agent_position[1]})")
