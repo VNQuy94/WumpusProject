@@ -131,6 +131,36 @@ class Agent:
             self.kb.tell(Glitter(x, y))
             self.add_gold_rules(x, y)
 
+        # Sau khi cập nhật KB, thử suy luận thêm các ô nguy hiểm duy nhất
+        self.infer_local_hazards(x, y)
+
+    def infer_local_hazards(self, x, y):
+        """
+        Nếu tại (x,y) có Stench (S) và tất cả neighbor trừ một đã chứng minh được ~W => ô còn lại là Wumpus.
+        Cập nhật trực tiếp vào KB và kb_world để các bước sau không cần chờ suy luận bằng resolution tốn thời gian.
+        """
+        neighbors = self._get_neighbors(x, y)
+        if not neighbors:
+            return
+
+        # Suy luận Wumpus duy nhất
+        if self.engine.ask(self.kb, S(x, y)):
+            unknown_wumpus_candidates = []
+            for nx, ny in neighbors:
+                # Nếu chưa chắc chắn ~W(nx,ny) thì vẫn là ứng viên
+                if not self.engine.ask(self.kb, Not(W(nx, ny))):
+                    unknown_wumpus_candidates.append((nx, ny))
+            # Nếu chỉ còn đúng 1 ứng viên => đó là Wumpus
+            if len(unknown_wumpus_candidates) == 1:
+                wx, wy = unknown_wumpus_candidates[0]
+                if not self.engine.ask(self.kb, W(wx, wy)):
+                    self.kb.tell(W(wx, wy))  # Khẳng định Wumpus
+                self.kb_world[wx][wy].set_has_wumpus(True)
+                # Các neighbor còn lại là an toàn khỏi Wumpus
+                for nx, ny in neighbors:
+                    if (nx, ny) != (wx, wy):
+                        self.kb.tell(Not(W(nx, ny)))
+
     # Làm sao để khi tôi đi ra khỏi ô đó không cần những rule đó nữa thì agent sẽ xóa bớt đi những rules đó vì không cần dùng tới
     def remove_rules_for_cell(self, x, y):
         self.kb.remove([S(x, y)])
@@ -206,21 +236,48 @@ class Agent:
         return None  # Không còn ô an toàn nào
     
     def find_wumpus_on_line(self):
-        """Kiểm tra xem có Wumpus trên hàng ngang hoặc cột dọc theo hướng mặt hiện tại không."""
+        """
+        Kiểm tra xem có Wumpus trên hàng ngang hoặc cột dọc theo hướng mặt hiện tại không.
+        Trả về (hướng_so_với_agent) nếu phát hiện, ngược lại trả về None.
+        """
         x, y = self.current_pos
-        if self.direction in ["East", "West"]:  # Hàng ngang (horizontal)
+        wumpus_dir = None
+
+        if self.direction in ["East", "West"]:  # Quét hàng ngang
             for ny in range(self.size):
                 if self.kb_world[x][ny].has_wumpus:
-                    return True
-        elif self.direction in ["North", "South"]:  # Cột dọc (vertical)
+                    # Xác định hướng Wumpus
+                    if ny > y:
+                        wumpus_dir = "East"
+                    elif ny < y:
+                        wumpus_dir = "West"
+
+                    return wumpus_dir
+
+        elif self.direction in ["North", "South"]:  # Quét cột dọc
             for nx in range(self.size):
                 if self.kb_world[nx][y].has_wumpus:
-                    return True
-        return False
+                    # Xác định hướng Wumpus
+                    if nx > x:
+                        wumpus_dir = "South"
+                    elif nx < x:
+                        wumpus_dir = "North"
+
+                    return wumpus_dir
+
+        return None
 
     def find_shooting_position(self):
-        """Tìm vị trí an toàn gần nhất trên cùng hàng/cột với một Wumpus đã biết để di chuyển đến và bắn."""
-        wumpus_positions = [(i, j) for i in range(self.size) for j in range(self.size) if self.kb_world[i][j].has_wumpus]
+        """
+        Tìm vị trí an toàn gần nhất trên cùng hàng/cột với một Wumpus đã biết.
+        Trả về (vị_trí_bắn, hướng_bắn) hoặc None nếu không có vị trí phù hợp.
+        """
+        wumpus_positions = [
+            (i, j) 
+            for i in range(self.size) 
+            for j in range(self.size) 
+            if self.kb_world[i][j].has_wumpus
+        ]
         if not wumpus_positions:
             return None
 
@@ -228,22 +285,41 @@ class Agent:
         for wx, wy in wumpus_positions:
             # Vị trí an toàn trên cùng hàng (row)
             for y_pos in range(self.size):
-                if self.kb_world[wx][y_pos].is_safe and (wx, y_pos) != (wx, wy):  # Không phải vị trí Wumpus
-                    candidate_positions.append((wx, y_pos))
+                if self.kb_world[wx][y_pos].is_safe and (wx, y_pos) != (wx, wy):
+                    candidate_positions.append(((wx, y_pos), wx, wy))  # Lưu cả tọa độ Wumpus
             # Vị trí an toàn trên cùng cột (column)
             for x_pos in range(self.size):
                 if self.kb_world[x_pos][wy].is_safe and (x_pos, wy) != (wx, wy):
-                    candidate_positions.append((x_pos, wy))
+                    candidate_positions.append(((x_pos, wy), wx, wy))
 
         if not candidate_positions:
             return None
 
-        # Sắp xếp theo khoảng cách Manhattan gần nhất từ vị trí hiện tại
-        candidate_positions = list(set(candidate_positions))  # Loại trùng lặp
-        candidate_positions.sort(key=lambda p: self.manhattan_distance(p[0], p[1]))
-        return candidate_positions[0]  # Trả về vị trí gần nhất
+        # Loại trùng theo vị trí bắn
+        seen = {}
+        for shoot_pos, wx, wy in candidate_positions:
+            seen[shoot_pos] = (wx, wy)
+        candidate_positions = [(pos, seen[pos][0], seen[pos][1]) for pos in seen]
+
+        # Sắp xếp theo khoảng cách Manhattan
+        candidate_positions.sort(
+            key=lambda item: self.manhattan_distance(item[0][0], item[0][1])
+        )
+
+        # Lấy vị trí gần nhất
+        shoot_pos, wx, wy = candidate_positions[0]
+
+        # Xác định hướng bắn dựa trên vị trí Wumpus
+        if shoot_pos[0] == wx:
+            shoot_dir = "East" if wy > shoot_pos[1] else "West"
+        elif shoot_pos[1] == wy:
+            shoot_dir = "South" if wx > shoot_pos[0] else "North"
+
+        return shoot_pos, shoot_dir
 
     def make_decision(self, percepts):
+        directions = ["East", "South", "West", "North"]
+
         x, y = self.current_pos
 
         # Cập nhật percepts vào knowledge base
@@ -270,7 +346,7 @@ class Agent:
 
         action = None
         # Nếu danh sách hành động của agent không rỗng    
-        if len(self.actions):
+        if self.actions:
             action = self.actions.pop(0)
         
         # Nếu danh sách hành động của agent là rỗng
@@ -290,7 +366,7 @@ class Agent:
 
                 # Cập nhật kb_world dựa trên kb
                 if is_safe_pit and is_safe_wumpus:
-                     self.kb_world[nx][ny].is_safe = True
+                     self.kb_world[nx][ny].set_is_safe(True)
                     
             # Tìm kiếm danh sách các hành động mới
             goal = self.find_goal()
@@ -306,20 +382,52 @@ class Agent:
                 print("Không còn ô an toàn")
                 if self.has_arrow:
                     # Kiểm tra có thể bắn trực tiếp từ vị trí hiện tại không
-                    if self.find_wumpus_on_line():
+                    wumpus_dir = self.find_wumpus_on_line()
+                    if wumpus_dir:
                         self.has_arrow = False  # Bắn rồi thì hết arrow
-                        return "Shoot"  # Bắn ngay
+                        wumpus_idx = directions.index(wumpus_dir)
+                        current_idx = directions.index(self.direction)
+
+                        turn = (wumpus_idx - current_idx) % 4
+                        turn_actions = []
+                        if turn == 1:
+                            turn_actions = ["Turn Right"]
+                        elif turn == 2:
+                            turn_actions = ["Turn Right", "Turn Right"]
+                        elif turn == 3:
+                            turn_actions = ["Turn Left"]
+                        print(f"Ban Wumpus o huong {wumpus_dir}")
+                        self.actions = turn_actions + ["Shoot"]
+                        return self.actions.pop(0)
                     
                     else:
-                        # Tìm vị trí để di chuyển đến để bắn
-                        shooting_pos = self.find_shooting_position()
-                        
-                        print(shooting_pos)
+                        is_none = self.find_shooting_position()
 
-                        if shooting_pos:
-                            start_state = (x, y, self.direction)
-                            self.actions = self.planner.plan(start_state, shooting_pos, self.kb_world)
-                            if self.actions:
+                        if is_none:
+                            shoot_pos, shoot_dir = is_none
+
+                            if shoot_pos and shoot_dir:
+                                self.has_arrow = False  # Bắn rồi thì hết arrow
+                                start_state = (x, y, self.direction)
+                                self.actions = self.planner.plan(start_state, shoot_pos, self.kb_world)
+
+                                shoot_idx = directions.index(shoot_dir)
+                                current_idx = directions.index(self.direction)
+
+                                turn = (shoot_idx - current_idx) % 4
+                                turn_actions = []
+                                if turn == 1:
+                                    turn_actions = ["Turn Right"]
+                                elif turn == 2:
+                                    turn_actions = ["Turn Right", "Turn Right"]
+                                elif turn == 3:
+                                    turn_actions = ["Turn Left"]
+                                print(f"Bắn Wumpus ở hướng {shoot_dir}")
+                                
+                                for action in turn_actions:
+                                    self.actions.append(action)
+
+                                self.actions.append("Shoot")
                                 action = self.actions.pop(0)
 
                 # Nếu không có action từ trên và không còn arrow, random di chuyển
@@ -331,18 +439,17 @@ class Agent:
                     for nx, ny in unvisited_neighbors:
                         target_dir = self.get_direction_to_neighbor(nx, ny)
                         if target_dir:  # Nếu là ô lân cận hợp lệ
-                            directions = ["East", "South", "West", "North"]
 
                             current_idx = directions.index(self.direction)
                             target_idx = directions.index(target_dir)
 
-                            turns = (target_idx - current_idx) % 4
+                            turn = (target_idx - current_idx) % 4
                             turn_actions = []
-                            if turns == 1:
+                            if turn == 1:
                                 turn_actions = ["Turn Right"]
-                            elif turns == 2:
+                            elif turn == 2:
                                 turn_actions = ["Turn Right", "Turn Right"]
-                            elif turns == 3:
+                            elif turn == 3:
                                 turn_actions = ["Turn Left"]
                             # Thêm Move Forward
                             self.actions = turn_actions + ["Move Forward"]

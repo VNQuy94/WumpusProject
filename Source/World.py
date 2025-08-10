@@ -211,7 +211,10 @@ class World:
             new_row, new_col = row + dr, col + dc
             if 0 <= new_row < self.size and 0 <= new_col < self.size:
                 if effect == STENCH:
-                    self.world[new_row][new_col] = self.world[new_row][new_col].replace(STENCH, EMPTY)
+                    if self.world[new_row][new_col] == STENCH:
+                        self.world[new_row][new_col] = self.world[new_row][new_col].replace(STENCH, EMPTY)
+                    else:
+                        self.world[new_row][new_col] -= STENCH
 
     def __str__(self):
     
