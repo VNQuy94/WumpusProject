@@ -116,6 +116,34 @@ class Agent:
             for nx, ny in neighbors:
                 self.kb.tell(Not(P(nx, ny)))
 
+        if percepts[3]:
+            if self.direction == 'East':
+                for i in range(y + 1, self.size):
+                    if self.kb_world[x][i].is_visited == False:
+                        self.kb.tell(Not(W(x, i)))
+                        self.kb_world[x][i].set_has_wumpus(False)
+                        break
+            
+            if self.direction == 'West':
+                for i in range(y - 1, -1, -1):
+                    if self.kb_world[x][i].is_visited == False:
+                        self.kb.tell(Not(W(x, i)))
+                        self.kb_world[x][i].set_has_wumpus(False)
+                        break
+            if self.direction == 'North':
+                for i in range(x + 1, self.size):
+                    if self.kb_world[i][y].is_visited == False:
+                        self.kb.tell(Not(W(i, y)))
+                        self.kb_world[i][y].set_has_wumpus(False)
+                        break
+
+            if self.direction == 'South':
+                for i in range(x - 1, self.size):
+                    if self.kb_world[i][y].is_visited == False:
+                        self.kb.tell(Not(W(i, y)))
+                        self.kb_world[i][y].set_has_wumpus(False)
+                        break
+
         # Sau khi cập nhật KB, thử suy luận thêm các ô nguy hiểm duy nhất
         self.infer_local_hazards(x, y)
 
@@ -378,36 +406,17 @@ class Agent:
             else:
                 print("Không còn ô an toàn")
                 if self.has_arrow:
-                    # Kiểm tra có thể bắn trực tiếp từ vị trí hiện tại không
-                    wumpus_dir = self.find_wumpus_on_line()
-                    if wumpus_dir:
-                        self.has_arrow = False  # Bắn rồi thì hết arrow
-                        wumpus_idx = directions.index(wumpus_dir)
-                        current_idx = directions.index(self.direction)
+                    shoot_info = self.find_shooting_position()
+                    print(shoot_info)
+                    if shoot_info:
+                        shoot_pos, shoot_dir = shoot_info
 
-                        turn = (wumpus_idx - current_idx) % 4
-                        turn_actions = []
-                        if turn == 1:
-                            turn_actions = ["Turn Right"]
-                        elif turn == 2:
-                            turn_actions = ["Turn Right", "Turn Right"]
-                        elif turn == 3:
-                            turn_actions = ["Turn Left"]
-                        print(f"Ban Wumpus o huong {wumpus_dir}")
-                        self.actions = turn_actions + ["Shoot"]
-                        return self.actions.pop(0)
-                    
-                    else:
-                        is_none = self.find_shooting_position()
+                        if shoot_pos and shoot_dir:
+                            self.has_arrow = False  # Bắn rồi thì hết arrow
+                            start_state = (x, y, self.direction)
+                            self.actions = self.planner.plan(start_state, shoot_pos, self.kb_world)
 
-                        if is_none:
-                            shoot_pos, shoot_dir = is_none
-
-                            if shoot_pos and shoot_dir:
-                                self.has_arrow = False  # Bắn rồi thì hết arrow
-                                start_state = (x, y, self.direction)
-                                self.actions = self.planner.plan(start_state, shoot_pos, self.kb_world)
-
+                            if len(self.actions) == 1 and self.actions[0] == "Move Forward" or len(self.actions) == 0:
                                 shoot_idx = directions.index(shoot_dir)
                                 current_idx = directions.index(self.direction)
 
@@ -425,7 +434,7 @@ class Agent:
                                     self.actions.append(action)
 
                                 self.actions.append("Shoot")
-                                action = self.actions.pop(0)
+                            action = self.actions.pop(0)
 
                 # Nếu không có action từ trên và không còn arrow, random di chuyển
             if action is None:
@@ -460,5 +469,4 @@ class Agent:
                     if self.actions:
                         action = self.actions.pop(0)
 
-        print(self.kb)
         return action

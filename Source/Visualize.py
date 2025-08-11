@@ -52,8 +52,6 @@ class Visualize:
                     self.game_display.blit(self.gold_image, rect)
                 if 'P' in world.world[row][col]:
                     self.game_display.blit(self.pit_image, rect)
-                if 'G' in world.world[row][col]:
-                    self.game_display.blit(self.gold_image, rect)
 
                 if 'B' in world.world[row][col]:
                     text_surface = self.PERCEPT_FONT.render('B', True, (255, 0, 0))
@@ -105,6 +103,19 @@ class Visualize:
         
         self.game_display.blit(self.INFO_FONT.render(f"Percepts: {text_percept}", True, (0, 0, 0)), (info_x + 20, info_y + 150))
 
+    def draw_inform(self, inform):
+        overlay = pygame.Surface((self.width, self.height), pygame.SRCALPHA)
+        overlay.set_alpha(150)
+        overlay.fill((0, 0, 0))
+
+        self.game_display.blit(overlay, (0, 0))
+
+        font_inform = pygame.font.SysFont('sans', 30, bold=True)
+        text_surface = font_inform.render(inform, True, (239, 239, 200))
+        
+        # Vẽ text ở giữa màn hình
+        text_rect = text_surface.get_rect(center=(self.width // 2, self.height // 2))
+        self.game_display.blit(text_surface, text_rect)
 
 
 

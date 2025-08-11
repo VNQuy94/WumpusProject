@@ -152,7 +152,7 @@ class World:
             if self.agent_direction == "East":
                 for j in range(col, self.size):
                     if WUMPUS in self.world[row][j]:
-                        self.world[row][j] = self.world[row][j].replace(WUMPUS, EMPTY)
+                        self.world[row][j] = self.world[row][j].replace(WUMPUS, '')
                         self.clear_effects(row, j, STENCH)
                         print(f"Mũi tên trúng Wumpus tại ({x}, {j})")
                         return percepts + [True]
@@ -160,7 +160,7 @@ class World:
             elif self.agent_direction == "West":
                 for j in range(y - 1, -1, -1):
                     if WUMPUS in self.world[row][j]:
-                        self.world[row][j] = self.world[row][j].replace(WUMPUS, EMPTY)
+                        self.world[row][j] = self.world[row][j].replace(WUMPUS, '')
                         self.clear_effects(row, j, STENCH)
                         print(f"Mũi tên trúng Wumpus tại ({x}, {j})")
                         return percepts + [True]
@@ -168,7 +168,7 @@ class World:
             elif self.agent_direction == "North":
                 for i in range(row - 1, self.size):
                     if WUMPUS in self.world[i][col]:
-                        self.world[i][col] = self.world[i][col].replace(WUMPUS, EMPTY)
+                        self.world[i][col] = self.world[i][col].replace(WUMPUS, '')
                         self.clear_effects(i, col, STENCH)
                         print(f"Mũi tên trúng Wumpus tại ({i}, {y})")
                         return percepts + [True]
@@ -176,7 +176,7 @@ class World:
             elif self.agent_direction == "South":
                 for i in range(row + 1):
                     if WUMPUS in self.world[i][col]:
-                        self.world[i][col] = self.world[i][col].replace(WUMPUS, EMPTY)
+                        self.world[i][col] = self.world[i][col].replace(WUMPUS, '')
                         self.clear_effects(i, col, STENCH)
                         print(f"Mũi tên trúng Wumpus tại ({i}, {y})")
                         return percepts + [True]
@@ -214,7 +214,7 @@ class World:
                     if self.world[new_row][new_col] == STENCH:
                         self.world[new_row][new_col] = self.world[new_row][new_col].replace(STENCH, EMPTY)
                     else:
-                        self.world[new_row][new_col] -= STENCH
+                        self.world[new_row][new_col] = self.world[new_row][new_col].replace(STENCH, '')
 
     def __str__(self):
     
