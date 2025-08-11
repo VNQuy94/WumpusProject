@@ -41,7 +41,11 @@ class Agent:
         self.has_arrow = True
         self.has_gold = False
         self.action_count = 0
+        self.shooting_plan = None
 
+    def set_arrow(self, value):
+        self.has_arrow = value
+        
     def manhattan_distance(self, x, y):
         return abs(x - self.current_pos[0]) + abs(y - self.current_pos[1])
     
@@ -350,6 +354,24 @@ class Agent:
         # Cập nhật percepts vào knowledge base
         self.perceive_and_update(percepts)
 
+        if self.shooting_plan and self.current_pos == self.shooting_plan['target_pos']:
+            target_dir = self.shooting_plan['shoot_dir']
+
+            turn_actions = []
+            current_idx = directions.index(self.direction)
+            target_idx = directions.index(target_dir)
+            turn = (target_idx - current_idx) % 4
+            if turn == 1:
+                turn_actions = ["Turn Right"]
+            elif turn == 2:
+                turn_actions = ["Turn Right", "Turn Right"]
+            elif turn == 3:
+                turn_actions = ["Turn Left"]
+            self.actions = turn_actions + ["Shoot"]
+            self.shooting_plan = None
+            self.has_arrow = False
+            return self.actions.pop(0)
+
         # Kiểm tra và nhặt vàng nếu có
         if percepts[2] and not self.has_gold:  # Glitter = True
             self.has_gold = True
@@ -369,10 +391,11 @@ class Agent:
                 action = self.actions.pop(0)
                 return action
 
-        action = None
         # Nếu danh sách hành động của agent không rỗng    
         if self.actions:
             action = self.actions.pop(0)
+            return action
+            
         
         # Nếu danh sách hành động của agent là rỗng
         else:
@@ -383,24 +406,22 @@ class Agent:
                 # hãy tạo thành một list query truyền vào 1 lần thôi
                 is_safe_pit = self.engine.ask(self.kb, Not(P(nx, ny)))
                 is_safe_wumpus = self.engine.ask(self.kb, Not(W(nx, ny)))
-                has_wumpus = self.engine.ask(self.kb, W(nx, ny))
-
-                if has_wumpus:
-                    print(f"Wumpus found at ({nx}, {ny})")
-                    self.kb_world[nx][ny].set_has_wumpus(True)
 
                 # Cập nhật kb_world dựa trên kb
                 if is_safe_pit and is_safe_wumpus:
-                     self.kb_world[nx][ny].set_is_safe(True)
+                    self.kb_world[nx][ny].set_is_safe(True)
+                else:
+                    has_wumpus = self.engine.ask(self.kb, W(nx, ny))
+
+                    if has_wumpus:
+                        print(f"Wumpus found at ({nx}, {ny})")
+                        self.kb_world[nx][ny].set_has_wumpus(True)
                     
             # Tìm kiếm danh sách các hành động mới
             goal = self.find_goal()
             if goal is not None:
                 start_state = (x, y, self.direction)
                 self.actions = self.planner.plan(start_state, goal, self.kb_world)
-
-                if self.actions:
-                    action = self.actions.pop(0)
             
             # Nếu không có goal an toàn (danh sách hành động rỗng)
             else:
@@ -412,35 +433,15 @@ class Agent:
                         shoot_pos, shoot_dir = shoot_info
 
                         if shoot_pos and shoot_dir:
-                            self.has_arrow = False  # Bắn rồi thì hết arrow
+                            self.shooting_plan = {'target_pos': shoot_pos, 'target_dir': shoot_dir}
                             start_state = (x, y, self.direction)
                             self.actions = self.planner.plan(start_state, shoot_pos, self.kb_world)
 
-                            if len(self.actions) == 1 and self.actions[0] == "Move Forward" or len(self.actions) == 0:
-                                shoot_idx = directions.index(shoot_dir)
-                                current_idx = directions.index(self.direction)
-
-                                turn = (shoot_idx - current_idx) % 4
-                                turn_actions = []
-                                if turn == 1:
-                                    turn_actions = ["Turn Right"]
-                                elif turn == 2:
-                                    turn_actions = ["Turn Right", "Turn Right"]
-                                elif turn == 3:
-                                    turn_actions = ["Turn Left"]
-                                print(f"Bắn Wumpus ở hướng {shoot_dir}")
-                                
-                                for action in turn_actions:
-                                    self.actions.append(action)
-
-                                self.actions.append("Shoot")
-                            action = self.actions.pop(0)
-
                 # Nếu không có action từ trên và không còn arrow, random di chuyển
-            if action is None:
+            if not self.actions:
                 neighbors = self._get_neighbors(x, y)
-                if neighbors:  # Nếu có ô lân cận
-                    unvisited_neighbors = [(nx, ny) for nx, ny in neighbors if not self.kb_world[nx][ny].is_visited]
+                unvisited_neighbors = [(nx, ny) for nx, ny in neighbors if not self.kb_world[nx][ny].is_visited]
+                if unvisited_neighbors:
                     random.shuffle(unvisited_neighbors)  # Xáo trộn để random
                     for nx, ny in unvisited_neighbors:
                         target_dir = self.get_direction_to_neighbor(nx, ny)
@@ -459,14 +460,16 @@ class Agent:
                                 turn_actions = ["Turn Left"]
                             # Thêm Move Forward
                             self.actions = turn_actions + ["Move Forward"]
-                            action = self.actions.pop(0)  # Thực hiện hành động đầu tiên
                             break  # Dừng sau khi chọn được action
                 else:
                     # Nếu không có neighbor (ít xảy ra), fallback về (0,0)
                     goal = (0, 0)
                     start_state = (x, y, self.direction)
                     self.actions = self.planner.plan(start_state, goal, self.kb_world)
-                    if self.actions:
-                        action = self.actions.pop(0)
-
-        return action
+        
+        if self.actions:
+            return self.actions.pop(0)
+        else:
+            # Nếu không có kế hoạch nào được tạo ra, lựa chọn cuối cùng là thoát
+            print("Không thể thực hiện bất kỳ hành động nào. Leo ra.")
+            return "Climb"
