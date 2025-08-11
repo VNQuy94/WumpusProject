@@ -48,7 +48,7 @@ class RandomAgent:
         Returns: Danh sách hành động
         """
         queue = deque()
-        visited_states = set()
+        visited_states = {}
         
         queue.append([start_state, []])  # (state, actions)
         visited_states[start_state] = (start_state, None)
