@@ -55,15 +55,15 @@ class RandomAgent:
         
         while queue:
             current_state, actions = queue.popleft()
-            x, y, = current_state
+            x, y, _ = current_state
             
-            for next_state, action in self.get_neighbors(current_state, kb_world):
+            for next_state, action, _ in self.get_neighbors(current_state, kb_world):
                 if next_state not in visited_states:
                     # Kiểm tra mục tiêu
                     if (x, y) == goal_position:
                         return [action for action in actions]
             
-                queue.append(next_state, action)
+                queue.append([next_state, action])
                 visited_states[next_state] = (next_state, current_state)
 
         return []  # Trả về rỗng nếu không tìm thấy đường đi
