@@ -94,17 +94,6 @@ class Agent:
 
         for nx, ny in neighbors:
             self.kb.add([Not(P(nx, ny)), B(x, y)])
-    
-    def add_gold_rules(self, x, y):
-        neighbors = self._get_neighbors(x, y)
-        if not neighbors:
-            return 
-        
-        literals = [Gold(nx, ny) for nx, ny in neighbors]
-        self.kb.add([Not(Glitter(x,y))] + literals)
-
-        for nx, ny in neighbors:
-            self.kb.add([Not(Gold(nx, ny)), Glitter(x, y)])
 
     def perceive_and_update(self, percepts):
         x, y = self.current_pos
@@ -126,10 +115,6 @@ class Agent:
             neighbors = self._get_neighbors(x, y)
             for nx, ny in neighbors:
                 self.kb.tell(Not(P(nx, ny)))
-
-        if percepts[2]:
-            self.kb.tell(Glitter(x, y))
-            self.add_gold_rules(x, y)
 
         # Sau khi cập nhật KB, thử suy luận thêm các ô nguy hiểm duy nhất
         self.infer_local_hazards(x, y)
@@ -163,11 +148,23 @@ class Agent:
 
     # Làm sao để khi tôi đi ra khỏi ô đó không cần những rule đó nữa thì agent sẽ xóa bớt đi những rules đó vì không cần dùng tới
     def remove_rules_for_cell(self, x, y):
-        self.kb.remove([S(x, y)])
-        self.kb.remove([B(x, y)])
-        self.kb.remove([Glitter(x, y)])
-        self.kb.remove([W(x, y)])
-        self.kb.remove([P(x, y)])
+        neighbors = self._get_neighbors(x, y)
+    # --- Xóa các quy tắc liên quan đến Wumpus ---
+        if neighbors:
+            wumpus_literals = [W(nx, ny) for nx, ny in neighbors]
+            self.kb.remove([Not(S(x,y))] + wumpus_literals)
+
+            for nx, ny in neighbors:
+                self.kb.remove([Not(W(nx, ny)), S(x, y)])
+                
+        # --- Xóa các quy tắc liên quan đến Pit ---
+        if neighbors:
+            pit_literals = [P(nx, ny) for nx, ny in neighbors]
+            self.kb.remove([Not(B(x,y))] + pit_literals)
+
+            for nx, ny in neighbors:
+                self.kb.remove([Not(P(nx, ny)), B(x, y)])
+
 
     def agent_update_state(self, action):
         x, y = self.current_pos
@@ -463,4 +460,5 @@ class Agent:
                     if self.actions:
                         action = self.actions.pop(0)
 
+        print(self.kb)
         return action
