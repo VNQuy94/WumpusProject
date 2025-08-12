@@ -3,7 +3,7 @@ import random
 class RandomAgent:
     def __init__(self, size):
         self.size = size
-        self.current_position = (0, 0)
+        self.current_pos = (0, 0)
         self.direction = "East"
         self.has_gold = False
         self.has_arrow = True
@@ -17,8 +17,10 @@ class RandomAgent:
         self.climb_weight = 20
         self.direction_list = ["East", "South", "West", "North"]
 
+    def set_arrow(self, value):
+        self.has_arrow = value
     def valid_action(self):
-        x, y = self.current_position
+        x, y = self.current_pos
         if self.direction == "East" and y + 1 >= self.size:
             return False
         if self.direction == "West" and y - 1 < 0:
@@ -40,7 +42,7 @@ class RandomAgent:
             self.has_gold = True
             return "Grab"
         
-        if self.current_position == (0, 0):
+        if self.current_pos == (0, 0):
             possible_actions.append("Climb")
             weights.append(self.climb_weight)
 
@@ -61,11 +63,11 @@ class RandomAgent:
     def agent_update_state(self, action):
         if action == "Move Forward":
             if self.valid_action():
-                x, y = self.current_position
-                if self.direction == "East": self.current_position = (x, y + 1)
-                elif self.direction == "West": self.current_position = (x, y - 1)
-                elif self.direction == "North": self.current_position = (x + 1, y)
-                elif self.direction == "South": self.current_position = (x - 1, y)
+                x, y = self.current_pos
+                if self.direction == "East": self.current_pos = (x, y + 1)
+                elif self.direction == "West": self.current_pos = (x, y - 1)
+                elif self.direction == "North": self.current_pos = (x + 1, y)
+                elif self.direction == "South": self.current_pos = (x - 1, y)
         
         elif action == "Turn Left":
             current_index = self.direction_list.index(self.direction)

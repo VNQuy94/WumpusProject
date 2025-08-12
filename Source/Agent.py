@@ -222,6 +222,7 @@ class Agent:
 
         self.current_pos = (x, y)
         self.kb_world[x][y].set_is_visited(True)
+        self.kb_world[x][y].set_is_safe(True)
         self.kb_world[x][y].set_turn_visited(self.action_count)
 
     def find_goal(self):
@@ -374,6 +375,26 @@ class Agent:
         # Cập nhật percepts vào knowledge base
         self.perceive_and_update(percepts)
 
+        # Kiểm tra và nhặt vàng nếu có
+        if percepts[2] and not self.has_gold:  # Glitter = True
+            self.has_gold = True
+            return "Grab"
+        
+        # Nếu có vàng và đang ở ô bắt đầu, leo ra ngay lập-tức
+        if self.has_gold and self.current_pos == (0, 0):
+            return "Climb"
+        
+        if self.actions:
+            return self.actions.pop(0)
+        
+        if self.has_gold:
+            if self.kb_world[0][0].is_safe:
+                print("Đã có vàng, lập kế hoạch quay về điểm xuất phát.")
+                start_state = (self.current_pos[0], self.current_pos[1], self.direction)
+                self.actions = self.planner.plan(start_state, (0, 0), self.kb_world)
+                print(self.actions)
+                return self.actions.pop(0)
+
         if self.shooting_plan and self.current_pos == self.shooting_plan['target_pos']:
             target_dir = self.shooting_plan['target_dir']
 
@@ -389,33 +410,7 @@ class Agent:
                 turn_actions = ["Turn Left"]
             self.actions = turn_actions + ["Shoot"]
             self.shooting_plan = None
-            return self.actions.pop(0)
-
-        # Kiểm tra và nhặt vàng nếu có
-        if percepts[2] and not self.has_gold:  # Glitter = True
-            self.has_gold = True
-            self.actions = []  # Xóa danh sách hành động để lập kế hoạch mới
-            return "Grab"
-
-        # Kiểm tra nếu ở (0,0) và có vàng thì leo ra
-        if self.has_gold and self.current_pos == (0, 0):
-            print("Agent leo ra tại (0,0) với vàng!")
-            return "Climb"
-
-        # Nếu danh sách hành động của agent không rỗng    
-        if self.actions:
-            action = self.actions.pop(0)
-            return action
-        
-        if self.has_gold and self.current_pos != (0, 0):
-            if self.kb_world[0][0].is_safe:
-                start_state = (x, y, self.direction)
-                self.actions = self.planner.plan(start_state, (0, 0), self.kb_world)
-
-                if self.actions:
-                    action = self.actions.pop(0)
-                    return action
-            
+            return self.actions.pop(0)      
         
         # Nếu danh sách hành động của agent là rỗng
         if not self.actions:
@@ -485,8 +480,11 @@ class Agent:
                             break  # Dừng sau khi chọn được action
                 else:
                     # Nếu không có neighbor (ít xảy ra), fallback về (0,0)
+                    print(1)
                     goal = (0, 0)
                     start_state = (x, y, self.direction)
                     self.actions = self.planner.plan(start_state, goal, self.kb_world)
+                    self.actions.append("Climb")
+                    print(self.actions)
 
         return self.actions.pop(0)

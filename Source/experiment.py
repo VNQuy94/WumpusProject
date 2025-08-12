@@ -22,7 +22,7 @@ def run_single_game(agent, world):
     score = 0
     action_count = 0
     
-    percepts = world.get_percepts(agent.current_pos[0], agent.current_pos[1])
+    percepts = world.get_percepts(agent.current_pos[0], agent.current_pos[1]) + [False]
 
     while True:
         action_count += 1
@@ -41,6 +41,7 @@ def run_single_game(agent, world):
             score += COST_MOVE
         elif action == "Shoot":
             score += COST_SHOOT
+            agent.set_arrow(False)
         
         new_percepts = world.perform_agent_action(action)
         
@@ -91,7 +92,10 @@ def run_experiment(sizes, wumpus_counts, pit_densities, num_trials=10):
 if __name__ == '__main__':
     # --- CẤU HÌNH THỬ NGHIỆM ---
     # Thay đổi các danh sách này để chạy các thử nghiệm khác nhau
-    param_sizes = [5, 10, 15]  # Thử với bản đồ 10x10
-    param_wumpus = [1, 2, 3, 4] # Số lượng wumpus từ 1 đến 4
-    param_pits = [0.1, 0.2, 0.3, 0.4, 0.5] # Mật độ hố
+    param_sizes = [5]  # Thử với bản đồ 10x10
+    param_wumpus = [1, 2, 3] # Số lượng wumpus từ 1 đến 4
+    param_pits = [0.1, 0.2, 0.3] # Mật độ hố
     num_trials_per_setting = 20 # Chạy 20 lần cho mỗi cấu hình để có kết quả ổn định
+
+    results_data = run_experiment(param_sizes, param_wumpus, param_pits, num_trials_per_setting)
+    print(results_data)
