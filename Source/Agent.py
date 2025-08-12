@@ -29,7 +29,7 @@ def Not(literal):
 
 # Class Agent
 class Agent:
-    def __init__(self, size, advance_mode):
+    def __init__(self, size):
         self.size = size
         self.kb_world = [[Cell(x, y) for y in range(self.size)] for x in range(self.size)]
         self.kb = KnowledgeBase()
@@ -42,7 +42,7 @@ class Agent:
         self.has_gold = False
         self.action_count = 0
         self.shooting_plan = None
-        self.advance_mode = advance_mode
+        # self.advance_mode = advance_mode
 
     def set_arrow(self, value):
         self.has_arrow = value
@@ -344,7 +344,7 @@ class Agent:
         if shoot_pos[0] == wx:
             shoot_dir = "East" if wy > shoot_pos[1] else "West"
         elif shoot_pos[1] == wy:
-            shoot_dir = "South" if wx > shoot_pos[0] else "North"
+            shoot_dir = "South" if wx < shoot_pos[0] else "North"
 
         return shoot_pos, shoot_dir
 
@@ -385,7 +385,8 @@ class Agent:
 
         print(self.actions)
         if self.shooting_plan and self.current_pos == self.shooting_plan['target_pos']:
-            target_dir = self.shooting_plan['shoot_dir']
+            print(self.shooting_plan)
+            target_dir = self.shooting_plan['target_dir']
 
             turn_actions = []
             current_idx = directions.index(self.direction)
@@ -505,3 +506,7 @@ class Agent:
             # Nếu không có kế hoạch nào được tạo ra, lựa chọn cuối cùng là thoát
             print("Không thể thực hiện bất kỳ hành động nào. Leo ra.")
             return "Climb"
+        
+    def random_action(self):
+        actions_list = ["Move Forward", "Turn Left", "Turn Right", "Climb", "Shoot", "Grab"]
+        return random.choice(actions_list) 

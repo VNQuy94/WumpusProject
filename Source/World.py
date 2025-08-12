@@ -1,5 +1,6 @@
 import random
 import GameCoords
+import Agent
 
 # Constants
 NUM_GOLD = 1
@@ -247,6 +248,89 @@ class World:
         
         # Nối tất cả các hàng lại với nhau bằng ký tự xuống dòng
         return "\n".join(map_rows)
+    
+    def perform_agent_random(self, action, agent: Agent):
+        x, y = self.agent_position
+        row, col = GameCoords.game_to_array_coords(x, y, self.size)
+        
+        if action == "Climb":
+            if agent.has_gold and agent.current_pos == (0, 0):
+                print("Agent leo ra tại (0,0) với vàng!")
+            else:
+                print("Agent leo ra khi không có vàng")
+        
+        if action == "Grab":
+            if GOLD in self.world[row][col]:
+                self.world[row][col] = self.world[row][col].replace(GOLD, EMPTY)
+                print(f"Agent đã nhặt vàng tại ({x}, {y})")      
+            
+        elif action == "Move Forward":
+            if self.agent_direction == "East":
+                if y + 1 < self.size:
+                    self.agent_position = (x, y + 1)
+
+            elif self.agent_direction == "West":
+                if y - 1 >= 0:
+                    self.agent_position = (x, y - 1)
+
+            elif self.agent_direction == "North":
+                if x + 1 < self.size:
+                    self.agent_position = (x + 1, y)
+
+            elif self.agent_direction == "South":
+                if x - 1 >= 0:
+                    self.agent_position = (x - 1, y)
+
+            row, col = GameCoords.game_to_array_coords(self.agent_position[0], self.agent_position[1], self.size)
+            # Kiểm tra va chạm với Wumpus hoặc Pit
+            if WUMPUS in self.world[row][col]:
+                print(f"Agent bị Wumpus giết tại ({self.agent_position[0]}, {self.agent_position[1]})")
+                return False
+            elif PIT in self.world[row][col]:
+                print(f"Agent rơi vào Pit tại ({self.agent_position[0]}, {self.agent_position[1]})")
+                return False
+
+        direction_list = ["East", "South", "West", "North"]
+        direction_index = direction_list.index(self.agent_direction)
+        if action == "Turn Left":
+            self.agent_direction = direction_list[(direction_index - 1) % 4]
+
+        if action == "Turn Right":
+            self.agent_direction = direction_list[(direction_index + 1) % 4]
+        
+        if action == "Shoot" and agent.has_arrow is True:
+            # Kiểm tra theo hướng của agent
+            if self.agent_direction == "East":
+                for j in range(col, self.size):
+                    if WUMPUS in self.world[row][j]:
+                        self.world[row][j] = self.world[row][j].replace(WUMPUS, '')
+                        self.clear_effects(row, j, STENCH)
+                        print(f"Mũi tên trúng Wumpus tại ({x}, {j})")
+                    
+            elif self.agent_direction == "West":
+                for j in range(y - 1, -1, -1):
+                    if WUMPUS in self.world[row][j]:
+                        self.world[row][j] = self.world[row][j].replace(WUMPUS, '')
+                        self.clear_effects(row, j, STENCH)
+                        print(f"Mũi tên trúng Wumpus tại ({x}, {j})")
+                    
+            elif self.agent_direction == "North":
+                for i in range(row - 1, self.size):
+                    if WUMPUS in self.world[i][col]:
+                        self.world[i][col] = self.world[i][col].replace(WUMPUS, '')
+                        self.clear_effects(i, col, STENCH)
+                        print(f"Mũi tên trúng Wumpus tại ({i}, {y})")
+            
+            elif self.agent_direction == "South":
+                for i in range(row + 1):
+                    if WUMPUS in self.world[i][col]:
+                        self.world[i][col] = self.world[i][col].replace(WUMPUS, '')
+                        self.clear_effects(i, col, STENCH)
+                        print(f"Mũi tên trúng Wumpus tại ({i}, {y})")
+                        
+            agent.has_arrow = False
+                        
+        return True
     
 if __name__ == "__main__":
     world = World()
