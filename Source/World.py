@@ -183,26 +183,37 @@ class World:
             
     def move_wumpus(self):
         """Di chuyển Wumpus (cho chế độ Moving Wumpus)"""
-        self.action_count += 1
-        if self.action_count % 5 == 0:  # Di chuyển sau mỗi 5 hành động
-            for i in range(self.size):
-                for j in range(self.size):
-                    if self.world[i][j] == WUMPUS:
-                        # Xóa stench cũ
-                        self.clear_effects(i, j, STENCH)
-                        # Chọn ô lân cận ngẫu nhiên
-                        directions = [(-1, 0), (1, 0), (0, -1), (0, 1)]
-                        random.shuffle(directions)
-                        for dr, dc in directions:
-                            new_row, new_col = i + dr, j + dc
-                            if (0 <= new_row < self.size and 0 <= new_col < self.size and
-                                not self.world[new_row][new_col] == WUMPUS and
-                                not self.world[new_row][new_col] == PIT):
-                                # Di chuyển Wumpus
-                                self.world[i][j] = '.'
-                                self.world[new_row][new_col] = WUMPUS
-                                self.add_effect(new_row, new_col, STENCH)
-                                break  # Chỉ di chuyển một lần
+        wumpus_locations = []
+        for r in range(self.size):
+            for c in range(self.size):
+                if WUMPUS in self.world[r][c]:
+                    wumpus_locations.append((r, c))
+        
+        occupied_cells = set(wumpus_locations)
+        
+        directions = [(-1, 0), (1, 0), (0, -1), (0, 1)] # North, South, West, East
+        moves = []
+        for (row, col) in wumpus_locations:
+            random.shuffle(directions)
+            for dr, dc in directions:
+                new_r, new_c = row + dr, col + dc
+                if (0 <= new_r < self.size and 0 <= new_c < self.size and
+                    PIT not in self.world[new_r][new_c] and
+                    (new_r, new_c) not in occupied_cells):
+                    occupied_cells.discard((row, col))
+                    occupied_cells.add((new_r, new_c))
+                    
+                    moves.append(((row, col), (new_r, new_c)))
+                    break
+
+        for (old_r, old_c), (new_r, new_c) in moves:
+            self.world[old_r][old_c] = self.world[old_r][old_c].replace(WUMPUS, '')
+            if self.world[old_r][old_c] == '':
+                self.world[old_r][old_c] = EMPTY
+            self.clear_effects(old_r, old_c, STENCH) # Xóa Stench ở các ô xung quanh vị trí cũ
+
+            self.world[new_r][new_c] += WUMPUS
+            self.add_effect(self.world, new_r, new_c, STENCH) # Thêm Stench ở các ô xung quanh vị trí mới
 
     def clear_effects(self, row, col, effect):
         """Xóa hiệu ứng (stench) khỏi các ô lân cận"""
@@ -210,12 +221,19 @@ class World:
         for dr, dc in directions:
             new_row, new_col = row + dr, col + dc
             if 0 <= new_row < self.size and 0 <= new_col < self.size:
-                if effect == STENCH:
-                    if self.world[new_row][new_col] == STENCH:
-                        self.world[new_row][new_col] = self.world[new_row][new_col].replace(STENCH, EMPTY)
+                if effect in self.world[new_row][new_col]:
+                    if self.world[new_row][new_col] == effect:
+                        self.world[new_row][new_col] = self.world[new_row][new_col].replace(effect, EMPTY)
                     else:
-                        self.world[new_row][new_col] = self.world[new_row][new_col].replace(STENCH, '')
+                        self.world[new_row][new_col] = self.world[new_row][new_col].replace(effect, '')
 
+    def check_wumpus_eat_agent(self):
+        x, y = self.agent_position
+        row, col = GameCoords.game_to_array_coords(x, y, self.size)
+        if WUMPUS in self.world[row][col]:
+            return True
+
+        return False 
     def __str__(self):
     
         # Tạo một danh sách các chuỗi, mỗi chuỗi là một hàng của thế giới

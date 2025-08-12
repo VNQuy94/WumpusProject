@@ -29,7 +29,7 @@ def Not(literal):
 
 # Class Agent
 class Agent:
-    def __init__(self, size):
+    def __init__(self, size, advance_mode):
         self.size = size
         self.kb_world = [[Cell(x, y) for y in range(self.size)] for x in range(self.size)]
         self.kb = KnowledgeBase()
@@ -42,6 +42,7 @@ class Agent:
         self.has_gold = False
         self.action_count = 0
         self.shooting_plan = None
+        self.advance_mode = advance_mode
 
     def set_arrow(self, value):
         self.has_arrow = value
@@ -230,6 +231,7 @@ class Agent:
 
         self.current_pos = (x, y)
         self.kb_world[x][y].set_is_visited(True)
+        self.kb_world[x][y].set_turn_visited(self.action_count)
 
     def find_goal(self):
         if self.has_gold:
@@ -346,6 +348,33 @@ class Agent:
 
         return shoot_pos, shoot_dir
 
+    def handle_wumpus_move(self):
+        clause_to_keep = []
+        all_clauses = self.kb.get_clauses()
+        for clause in all_clauses:
+            is_wumpus_stench_related = False
+            for literal in clause:
+                if 'W' in literal or 'S' in literal:
+                    is_wumpus_stench_related = True
+                    break
+            
+            if not is_wumpus_stench_related:
+                clause_to_keep.append(clause)
+
+        self.kb.clauses = set(clause_to_keep)
+
+        for row in range(self.size):
+            for col in range(self.size):
+                if self.kb_world[row][col].is_visited and self.action_count - self.kb_world[row][col].turn_visited <= 5 and S(row, col) not in all_clauses:
+                    self.kb.tell(Not(W(row, col)))
+                else:
+                    self.kb_world[row][col].set_has_wumpus(False)
+                    self.kb_world[row][col].set_is_safe(False)
+                    self.kb_world[row][col].set_is_visited(False)
+
+        self.actions = []
+        self.shooting_plan = None
+
     def make_decision(self, percepts):
         directions = ["East", "South", "West", "North"]
 
@@ -354,6 +383,7 @@ class Agent:
         # Cập nhật percepts vào knowledge base
         self.perceive_and_update(percepts)
 
+        print(self.actions)
         if self.shooting_plan and self.current_pos == self.shooting_plan['target_pos']:
             target_dir = self.shooting_plan['shoot_dir']
 
@@ -369,7 +399,6 @@ class Agent:
                 turn_actions = ["Turn Left"]
             self.actions = turn_actions + ["Shoot"]
             self.shooting_plan = None
-            self.has_arrow = False
             return self.actions.pop(0)
 
         # Kiểm tra và nhặt vàng nếu có
@@ -382,19 +411,20 @@ class Agent:
         if self.has_gold and self.current_pos == (0, 0):
             print("Agent leo ra tại (0,0) với vàng!")
             return "Climb"
-        
-        if self.has_gold and self.current_pos != (0, 0):
-            start_state = (x, y, self.direction)
-            self.actions = self.planner.plan(start_state, (0, 0), self.kb_world)
-
-            if self.actions:
-                action = self.actions.pop(0)
-                return action
 
         # Nếu danh sách hành động của agent không rỗng    
         if self.actions:
             action = self.actions.pop(0)
             return action
+        
+        if self.has_gold and self.current_pos != (0, 0):
+            if self.kb_world[0][0].is_safe:
+                start_state = (x, y, self.direction)
+                self.actions = self.planner.plan(start_state, (0, 0), self.kb_world)
+
+                if self.actions:
+                    action = self.actions.pop(0)
+                    return action
             
         
         # Nếu danh sách hành động của agent là rỗng
@@ -415,6 +445,7 @@ class Agent:
 
                     if has_wumpus:
                         print(f"Wumpus found at ({nx}, {ny})")
+                        self.kb.tell(W(nx, ny))
                         self.kb_world[nx][ny].set_has_wumpus(True)
                     
             # Tìm kiếm danh sách các hành động mới
@@ -467,6 +498,7 @@ class Agent:
                     start_state = (x, y, self.direction)
                     self.actions = self.planner.plan(start_state, goal, self.kb_world)
         
+        self.action_count += 1
         if self.actions:
             return self.actions.pop(0)
         else:
