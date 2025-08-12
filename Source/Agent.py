@@ -3,7 +3,6 @@ from KnowledgeBase import KnowledgeBase
 from Planner import Planner
 from Cells import Cell
 import random
-import GameCoords
 
 # Create symbols for the Wumpus World
 def P(x, y): 
@@ -42,7 +41,6 @@ class Agent:
         self.has_gold = False
         self.action_count = 0
         self.shooting_plan = None
-        # self.advance_mode = advance_mode
 
     def set_arrow(self, value):
         self.has_arrow = value
@@ -122,33 +120,23 @@ class Agent:
                 self.kb.tell(Not(P(nx, ny)))
 
         if percepts[3]:
+            dx, dy = 0, 0
             if self.direction == 'East':
-                for i in range(y + 1, self.size):
-                    if self.kb_world[x][i].is_visited == False:
-                        self.kb.tell(Not(W(x, i)))
-                        self.kb_world[x][i].set_has_wumpus(False)
-                        break
-            
-            if self.direction == 'West':
-                for i in range(y - 1, -1, -1):
-                    if self.kb_world[x][i].is_visited == False:
-                        self.kb.tell(Not(W(x, i)))
-                        self.kb_world[x][i].set_has_wumpus(False)
-                        break
-            if self.direction == 'North':
-                for i in range(x + 1, self.size):
-                    if self.kb_world[i][y].is_visited == False:
-                        self.kb.tell(Not(W(i, y)))
-                        self.kb_world[i][y].set_has_wumpus(False)
-                        break
+                dy = 1
+            elif self.direction == 'West':
+                dy = -1
+            elif self.direction == 'North':
+                dx = 1                 
+            elif self.direction == 'South':
+                dx = -1
+            current_x, current_y = x + dx, y + dy
 
-            if self.direction == 'South':
-                for i in range(x - 1, self.size):
-                    if self.kb_world[i][y].is_visited == False:
-                        self.kb.tell(Not(W(i, y)))
-                        self.kb_world[i][y].set_has_wumpus(False)
-                        break
-
+            while 0 <= current_x < self.size and 0 <= current_y < self.size:
+                if not self.kb_world[current_x][current_y].is_visited:
+                    self.kb.tell(Not(W(current_x, current_y)))
+                    self.kb.remove(W(current_x, current_y))
+                    self.kb_world[current_x][current_y].set_has_wumpus(False)
+                    self.kb_world[current_x][current_y].set_is_safe(True)
         # Sau khi cập nhật KB, thử suy luận thêm các ô nguy hiểm duy nhất
         self.infer_local_hazards(x, y)
 
@@ -179,7 +167,6 @@ class Agent:
                     if (nx, ny) != (wx, wy):
                         self.kb.tell(Not(W(nx, ny)))
 
-    # Làm sao để khi tôi đi ra khỏi ô đó không cần những rule đó nữa thì agent sẽ xóa bớt đi những rules đó vì không cần dùng tới
     def remove_rules_for_cell(self, x, y):
         neighbors = self._get_neighbors(x, y)
     # --- Xóa các quy tắc liên quan đến Wumpus ---
@@ -383,9 +370,7 @@ class Agent:
         # Cập nhật percepts vào knowledge base
         self.perceive_and_update(percepts)
 
-        print(self.actions)
         if self.shooting_plan and self.current_pos == self.shooting_plan['target_pos']:
-            print(self.shooting_plan)
             target_dir = self.shooting_plan['target_dir']
 
             turn_actions = []
@@ -451,6 +436,7 @@ class Agent:
                     
             # Tìm kiếm danh sách các hành động mới
             goal = self.find_goal()
+            print(goal)
             if goal is not None:
                 start_state = (x, y, self.direction)
                 self.actions = self.planner.plan(start_state, goal, self.kb_world)
@@ -499,14 +485,4 @@ class Agent:
                     start_state = (x, y, self.direction)
                     self.actions = self.planner.plan(start_state, goal, self.kb_world)
         
-        self.action_count += 1
-        if self.actions:
-            return self.actions.pop(0)
-        else:
-            # Nếu không có kế hoạch nào được tạo ra, lựa chọn cuối cùng là thoát
-            print("Không thể thực hiện bất kỳ hành động nào. Leo ra.")
-            return "Climb"
-        
-    def random_action(self):
-        actions_list = ["Move Forward", "Turn Left", "Turn Right", "Climb", "Shoot", "Grab"]
-        return random.choice(actions_list) 
+        return self.actions.pop(0)

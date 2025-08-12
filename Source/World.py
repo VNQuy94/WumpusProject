@@ -151,36 +151,44 @@ class World:
         if action == "Shoot":
             # Kiểm tra theo hướng của agent
             if self.agent_direction == "East":
-                for j in range(col, self.size):
+                for j in range(col + 1, self.size):
                     if WUMPUS in self.world[row][j]:
                         self.world[row][j] = self.world[row][j].replace(WUMPUS, '')
                         self.clear_effects(row, j, STENCH)
-                        print(f"Mũi tên trúng Wumpus tại ({x}, {j})")
+                        percepts = self.get_percepts(x, y)
                         return percepts + [True]
+                    
+                return percepts + [False]
                     
             elif self.agent_direction == "West":
-                for j in range(y - 1, -1, -1):
+                for j in range(col - 1, -1, -1):
                     if WUMPUS in self.world[row][j]:
                         self.world[row][j] = self.world[row][j].replace(WUMPUS, '')
                         self.clear_effects(row, j, STENCH)
-                        print(f"Mũi tên trúng Wumpus tại ({x}, {j})")
+                        percepts = self.get_percepts(x, y)
                         return percepts + [True]
                     
+                return percepts + [False]
+                    
             elif self.agent_direction == "North":
-                for i in range(row - 1, self.size):
+                for i in range(row - 1, -1, -1):
                     if WUMPUS in self.world[i][col]:
                         self.world[i][col] = self.world[i][col].replace(WUMPUS, '')
                         self.clear_effects(i, col, STENCH)
-                        print(f"Mũi tên trúng Wumpus tại ({i}, {y})")
+                        percepts = self.get_percepts(x, y)
                         return percepts + [True]
+                
+                return percepts + [False]
             
             elif self.agent_direction == "South":
-                for i in range(row + 1):
+                for i in range(row + 1, self.size):
                     if WUMPUS in self.world[i][col]:
                         self.world[i][col] = self.world[i][col].replace(WUMPUS, '')
                         self.clear_effects(i, col, STENCH)
-                        print(f"Mũi tên trúng Wumpus tại ({i}, {y})")
+                        percepts = self.get_percepts(x, y)
                         return percepts + [True]
+                    
+                return percepts + [False]
             
     def move_wumpus(self):
         """Di chuyển Wumpus (cho chế độ Moving Wumpus)"""

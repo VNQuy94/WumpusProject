@@ -123,6 +123,7 @@ def main():
 
             agent.agent_update_state(action)
             percepts = wumpus_world.perform_agent_action(action)
+            print(percepts)
             
             if percepts is None:  # Agent died
                 print("Agent đã chết!")
@@ -138,7 +139,7 @@ def main():
         pygame.display.flip()
         
         clock.tick(FPS)  # FPS = 60
-        pygame.time.delay(1500)
+        pygame.time.delay(ACTION_DELAY_MS)
 
         count_action += 1
 

@@ -24,6 +24,15 @@ class KnowledgeBase:
     def tell(self, literal):
         self.add([literal])
 
+        # tôi muốn kiểm tra literal đối có trong kb không, nếu có thì xóa thì làm sao
+        if literal.startswith('~'):
+            # Lấy chuỗi bên trong "Not(...)"
+            literal = literal[1:]
+        else:
+            literal = f"~{literal}"
+
+        self.remove([literal])
+
     def get_clauses(self):
         return self.clauses
 
