@@ -108,24 +108,24 @@ class World:
             
         elif action == "Move Forward":
             if self.agent_direction == "East":
-                percepts = self.get_percepts(x, y + 1)
                 if y + 1 < self.size:
                     self.agent_position = (x, y + 1)
+                    percepts = self.get_percepts(x, y + 1)
 
             elif self.agent_direction == "West":
-                percepts = self.get_percepts(x, y - 1)
                 if y - 1 >= 0:
                     self.agent_position = (x, y - 1)
+                    percepts = self.get_percepts(x, y - 1)
 
             elif self.agent_direction == "North":
-                percepts = self.get_percepts(x + 1, y)
                 if x + 1 < self.size:
                     self.agent_position = (x + 1, y)
+                    percepts = self.get_percepts(x + 1, y)
 
             elif self.agent_direction == "South":
-                percepts = self.get_percepts(x - 1, y)
                 if x - 1 >= 0:
                     self.agent_position = (x - 1, y)
+                    percepts = self.get_percepts(x - 1, y)
 
             row, col = GameCoords.game_to_array_coords(self.agent_position[0], self.agent_position[1], self.size)
             # Kiểm tra va chạm với Wumpus hoặc Pit

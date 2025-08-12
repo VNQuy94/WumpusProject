@@ -138,8 +138,8 @@ class Agent:
                     self.kb_world[current_x][current_y].set_has_wumpus(False)
                     self.kb_world[current_x][current_y].set_is_safe(True)
 
-            current_x += dx
-            current_y += dy
+                current_x += dx
+                current_y += dy
 
         # Sau khi cập nhật KB, thử suy luận thêm các ô nguy hiểm duy nhất
         self.infer_local_hazards(x, y)
@@ -418,7 +418,7 @@ class Agent:
             
         
         # Nếu danh sách hành động của agent là rỗng
-        else:
+        if not self.actions:
             neighbors = self._get_neighbors(x, y) # Tìm kiếm các ô xung quanh
 
             # Kiểm tra các ô xung quanh có an toàn hay không
@@ -488,5 +488,5 @@ class Agent:
                     goal = (0, 0)
                     start_state = (x, y, self.direction)
                     self.actions = self.planner.plan(start_state, goal, self.kb_world)
-        
+
         return self.actions.pop(0)
