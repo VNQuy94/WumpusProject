@@ -137,6 +137,9 @@ class Agent:
                     self.kb.remove(W(current_x, current_y))
                     self.kb_world[current_x][current_y].set_has_wumpus(False)
                     self.kb_world[current_x][current_y].set_is_safe(True)
+
+                current_x + dx, current_y + dy
+
         # Sau khi cập nhật KB, thử suy luận thêm các ô nguy hiểm duy nhất
         self.infer_local_hazards(x, y)
 
