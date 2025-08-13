@@ -190,7 +190,7 @@ class Agent:
             elif self.direction == 'South': dx = -1
             current_x, current_y = x + dx, y + dy
             while 0 <= current_x < self.size and 0 <= current_y < self.size:
-                if not self.kb_world[current_x][current_y].is_visited:
+                if not self.kb_world[current_x][current_y].is_visited and self.kb_world[current_x][current_y].has_wumpus:
                     self.kb.tell(Not(W(current_x, current_y)))
                     self.kb.remove(W(current_x, current_y))
                     self.kb_world[current_x][current_y].set_has_wumpus(False)
