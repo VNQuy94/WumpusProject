@@ -1,0 +1,21 @@
+World Size,Num Wumpus,P Pit
+6,2,0.2
+World Map Line 1,.   .   .   .   .   S
+World Map Line 2,B   .   B   .   SB  W
+World Map Line 3,P   B   P   B   P   SB
+World Map Line 4,B   .   B   B   P   W
+World Map Line 5,G   .   B   .   B   S
+World Map Line 6,.   B   P   B   .   .
+Step,Position,Direction,Action,Percepts
+0,"(0, 0)",East,Move Forward,
+1,"(0, 1)",East,Turn Left,Breeze
+2,"(0, 1)",North,Turn Left,Breeze
+3,"(0, 1)",West,Move Forward,Breeze
+4,"(0, 0)",West,Turn Right,
+5,"(0, 0)",North,Move Forward,
+6,"(1, 0)",North,Grab,Glitter
+7,"(1, 0)",North,Turn Right,
+8,"(1, 0)",East,Turn Right,
+9,"(1, 0)",South,Move Forward,
+10,"(0, 0)",South,Climb,
+Game Result,SUCCESS - Climbed out with gold!

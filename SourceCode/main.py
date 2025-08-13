@@ -54,7 +54,7 @@ def main():
     # Prepare CSV output directory and file
     output_dir = "./TestCases" 
     os.makedirs(output_dir, exist_ok=True)  
-    csv_filename = os.path.join(output_dir, f'WumpusWorld_15x15.csv')
+    csv_filename = os.path.join(output_dir, f'WumpusWorld_{world_size}x{world_size}.csv')
     with open(csv_filename, mode='w', newline='') as csv_file:
         csv_writer = csv.writer(csv_file)
         csv_writer.writerow(['World Size', 'Num Wumpus', 'P Pit'])
