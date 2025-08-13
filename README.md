@@ -20,7 +20,7 @@ pip install -r requirements.txt
 ```
 
 3. **Run the application**
-Run the `main.py` file by using the `python Source/main.py` command in the Terminal.
+Run the `main.py` file by using the `python SourceCode/main.py` command in the Terminal.
 
 After starting the application, input your own configuration for the Wumpus Game (Required fields: size of the Map, number of Wumpuses, pit's spawn probability, the game mode with 1 for default mode with non-moving wumpus and 2 for moving wumpus) then open the game's windows.
 
