@@ -1,0 +1,106 @@
+World Size,Num Wumpus,P Pit
+8,2,0.2
+World Map Line 1,.   .   .   .   .   .   .   .
+World Map Line 2,.   B   .   .   .   .   S   .
+World Map Line 3,B   P   B   .   .   S   W   S
+World Map Line 4,.   SB  P   B   .   B   S   .
+World Map Line 5,S   W   SB  .   B   P   B   B
+World Map Line 6,.   S   .   .   .   B   B   P
+World Map Line 7,.   .   .   .   B   P   B   BG
+World Map Line 8,.   .   .   .   .   B   B   P
+Step,Position,Direction,Action,Percepts
+0,"(0, 0)",East,Move Forward,
+1,"(0, 1)",East,Move Forward,
+2,"(0, 2)",East,Move Forward,
+3,"(0, 3)",East,Move Forward,
+4,"(0, 4)",East,Move Forward,
+5,"(0, 5)",East,Turn Left,Breeze
+6,"(0, 5)",North,Turn Left,Breeze
+7,"(0, 5)",West,Move Forward,Breeze
+8,"(0, 4)",West,Turn Right,
+9,"(0, 4)",North,Move Forward,
+10,"(1, 4)",North,Turn Left,Breeze
+11,"(1, 4)",West,Move Forward,Breeze
+12,"(1, 3)",West,Move Forward,
+13,"(1, 2)",West,Move Forward,
+14,"(1, 1)",West,Move Forward,
+15,"(1, 0)",West,Turn Right,
+16,"(1, 0)",North,Move Forward,
+17,"(2, 0)",North,Move Forward,
+18,"(3, 0)",North,Turn Right,Stench
+19,"(3, 0)",East,Turn Right,Stench
+20,"(3, 0)",South,Move Forward,Stench
+21,"(2, 0)",South,Turn Left,
+22,"(2, 0)",East,Move Forward,
+23,"(2, 1)",East,Move Forward,Stench
+24,"(2, 2)",East,Move Forward,
+25,"(2, 3)",East,Move Forward,
+26,"(2, 4)",East,Move Forward,
+27,"(2, 5)",East,Turn Left,Breeze
+28,"(2, 5)",North,Turn Left,Breeze
+29,"(2, 5)",West,Move Forward,Breeze
+30,"(2, 4)",West,Turn Right,
+31,"(2, 4)",North,Move Forward,
+32,"(3, 4)",North,Turn Left,Breeze
+33,"(3, 4)",West,Move Forward,Breeze
+34,"(3, 3)",West,Move Forward,
+35,"(3, 2)",West,Turn Right,"Stench, Breeze"
+36,"(3, 2)",North,Turn Right,"Stench, Breeze"
+37,"(3, 2)",East,Move Forward,"Stench, Breeze"
+38,"(3, 3)",East,Turn Left,
+39,"(3, 3)",North,Move Forward,
+40,"(4, 3)",North,Turn Right,Breeze
+41,"(4, 3)",East,Turn Right,Breeze
+42,"(4, 3)",South,Move Forward,Breeze
+43,"(3, 3)",South,Turn Right,
+44,"(3, 3)",West,Shoot,
+45,"(3, 3)",West,Move Forward,Scream
+46,"(3, 2)",West,Move Forward,Breeze
+47,"(3, 1)",West,Turn Right,
+48,"(3, 1)",North,Move Forward,
+49,"(4, 1)",North,Turn Left,Breeze
+50,"(4, 1)",West,Move Forward,Breeze
+51,"(4, 0)",West,Turn Right,
+52,"(4, 0)",North,Move Forward,
+53,"(5, 0)",North,Move Forward,Breeze
+54,"(6, 0)",North,Move Forward,
+55,"(7, 0)",North,Turn Right,
+56,"(7, 0)",East,Move Forward,
+57,"(7, 1)",East,Move Forward,
+58,"(7, 2)",East,Move Forward,
+59,"(7, 3)",East,Move Forward,
+60,"(7, 4)",East,Move Forward,
+61,"(7, 5)",East,Move Forward,
+62,"(7, 6)",East,Move Forward,
+63,"(7, 7)",East,Turn Right,
+64,"(7, 7)",South,Move Forward,
+65,"(6, 7)",South,Move Forward,
+66,"(5, 7)",South,Turn Left,Stench
+67,"(5, 7)",East,Turn Left,Stench
+68,"(5, 7)",North,Move Forward,Stench
+69,"(6, 7)",North,Turn Left,
+70,"(6, 7)",West,Move Forward,
+71,"(6, 6)",West,Move Forward,Stench
+72,"(6, 5)",West,Move Forward,
+73,"(6, 4)",West,Move Forward,
+74,"(6, 3)",West,Move Forward,
+75,"(6, 2)",West,Move Forward,
+76,"(6, 1)",West,Turn Right,Breeze
+77,"(6, 1)",North,Turn Right,Breeze
+78,"(6, 1)",East,Move Forward,Breeze
+79,"(6, 2)",East,Turn Right,
+80,"(6, 2)",South,Move Forward,
+81,"(5, 2)",South,Turn Left,Breeze
+82,"(5, 2)",East,Move Forward,Breeze
+83,"(5, 3)",East,Move Forward,
+84,"(5, 4)",East,Move Forward,
+85,"(5, 5)",East,Turn Left,Stench
+86,"(5, 5)",North,Turn Left,Stench
+87,"(5, 5)",West,Move Forward,Stench
+88,"(5, 4)",West,Turn Left,
+89,"(5, 4)",South,Move Forward,
+90,"(4, 4)",South,Turn Left,
+91,"(4, 4)",East,Move Forward,
+92,"(4, 5)",East,Turn Right,Breeze
+93,"(4, 5)",South,Move Forward,Breeze
+Game Result,DIED - Eaten by Wumpus or fell into a pit

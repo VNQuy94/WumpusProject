@@ -24,12 +24,6 @@ class Visualize:
         self.gold_image = pygame.transform.scale(pygame.image.load("assets/gold.png"), (self.cell_size, self.cell_size))
         self.pit_image = pygame.transform.scale(pygame.image.load("assets/pit.png"), (self.cell_size, self.cell_size))
 
-        # Load and scale arrow images for shooting animation
-        self.arrow_up = pygame.transform.scale(pygame.image.load("assets/arrow_up.png"), (self.cell_size, self.cell_size))
-        self.arrow_down = pygame.transform.scale(pygame.image.load("assets/arrow_down.png"), (self.cell_size, self.cell_size))
-        self.arrow_left = pygame.transform.scale(pygame.image.load("assets/arrow_left.png"), (self.cell_size, self.cell_size))
-        self.arrow_right = pygame.transform.scale(pygame.image.load("assets/arrow_right.png"), (self.cell_size, self.cell_size))
-
         # Colors
         self.DARK_GRAY = (50, 50, 50)
         self.LIGHT_GRAY = (169, 169, 169)

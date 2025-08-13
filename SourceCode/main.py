@@ -117,7 +117,6 @@ def main():
                     agent.handle_wumpus_move()
                     scream = percepts[3]
                     x, y = wumpus_world.agent_position[0], wumpus_world.agent_position[1]
-                    print(x, y)
                     percepts = wumpus_world.get_percepts(x, y) + [scream]
 
                 # Redraw game after Wumpus move
@@ -148,7 +147,6 @@ def main():
 
             # Let agent decide next action
             action = agent.make_decision(percepts)
-            print(f"Action: {action}")
             
             # Log action to CSV
             csv_writer.writerow([count_action, position, direction, action, percept_str])
@@ -157,10 +155,8 @@ def main():
             if action == "Climb":
                 running = False
                 if agent.has_gold:
-                    print("Agent escaped successfully with gold!")
                     game_result = "SUCCESS - Climbed out with gold!"
                 else:
-                    print("Agent escaped without gold!")
                     game_result = "FAIL - Climbed out without gold"
                 last_action = 'Climb'
             
@@ -173,10 +169,8 @@ def main():
 
                 agent.agent_update_state(action)
                 percepts = wumpus_world.perform_agent_action(action)
-                print(percepts)
                 
                 if percepts is None:  # Agent died
-                    print("Agent died!")
                     running = False
                     game_result = "DIED - Eaten by Wumpus or fell into a pit"
 

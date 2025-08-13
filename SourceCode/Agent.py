@@ -390,10 +390,8 @@ class Agent:
         # If gold obtained → plan a route back to start
         if self.has_gold:
             if self.kb_world[0][0].is_safe:
-                print("Gold acquired, planning route back to start.")
                 start_state = (self.current_pos[0], self.current_pos[1], self.direction)
                 self.actions = self.planner.plan(start_state, (0, 0), self.kb_world)
-                print(self.actions)
                 return self.actions.pop(0)
 
         # If at shooting position → aim and shoot
@@ -432,7 +430,6 @@ class Agent:
                     has_pit = self.engine.ask(self.kb, P(nx, ny))
 
                     if has_wumpus:
-                        print(f"Wumpus found at ({nx}, {ny})")
                         self.kb.tell(W(nx, ny))
                         self.kb_world[nx][ny].set_has_wumpus(True)
                     if has_pit:
@@ -441,13 +438,11 @@ class Agent:
 
             # Search for a safe goal
             goal = self.find_goal()
-            print(goal)
             if goal is not None:
                 start_state = (x, y, self.direction)
                 self.actions = self.planner.plan(start_state, goal, self.kb_world)
             else:
                 # No safe cells left
-                print("No safe cells remaining")
                 if self.has_arrow:
                     # Try to find a shooting position
                     shoot_info = self.find_shooting_position()

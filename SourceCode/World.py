@@ -252,13 +252,6 @@ class World:
         x, y = self.agent_position
         row, col = GameCoords.game_to_array_coords(x, y, self.size)
         
-        # Climb out of the cave
-        if action == "Climb":
-            if agent.has_gold and agent.current_pos == (0, 0):
-                print("Agent climbed out at (0,0) with gold!")
-            else:
-                print("Agent climbed out without gold")
-        
         # Grab gold if present
         if action == "Grab":
             if GOLD in self.world[row][col]:
