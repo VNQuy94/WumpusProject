@@ -5,9 +5,9 @@ import GameCoords
 class Visualize:
     def __init__(self, world_size):
         # Set display dimensions
-        self.width, self.height = 1000, 600
+        self.width, self.height = 1100, 600
         self.map_width = 600        # Width of the map section
-        self.info_width = 400       # Width of the information panel
+        self.info_width = 500       # Width of the information panel
         self.game_display = pygame.display.set_mode((self.width, self.height))  # Main game window
 
         self.world_size = world_size
@@ -102,19 +102,27 @@ class Visualize:
         self.game_display.blit(self.TITLE_FONT.render("Agent Info", True, (0, 0, 0)), (info_x + 20, info_y + 20))
         self.game_display.blit(self.INFO_FONT.render(f"Position: {world.agent_position}", True, (0,0,0)), (info_x + 20, info_y + 60))
         self.game_display.blit(self.INFO_FONT.render(f"Direction: {world.agent_direction}", True, (0, 0, 0)), (info_x + 20, info_y + 90))
-        self.game_display.blit(self.INFO_FONT.render(f"Last action: {action}", True, (0, 0, 0)), (info_x + 20, info_y + 120))
+        self.game_display.blit(self.INFO_FONT.render(f"Action: {action}", True, (0, 0, 0)), (info_x + 20, info_y + 120))
         
         # Build percept text string
         text_percept = ""
         if percepts[0]:
             text_percept += "Stench"
+        else:
+            text_percept += "No Stench"
         if percepts[1]:
             text_percept += ", Breeze"
+        else:
+            text_percept += ", No Breeze"
         if percepts[2]:
             text_percept += ", Glitter"
+        else:
+            text_percept += ", No Glitter"
         if percepts[3]:
             text_percept += ", Scream"
-        
+        else:
+            text_percept += ", No Scream"
+
         # Display percepts
         self.game_display.blit(self.INFO_FONT.render(f"Percepts: {text_percept}", True, (0, 0, 0)), (info_x + 20, info_y + 150))
 
