@@ -139,7 +139,7 @@ class Agent:
                 self.kb_world[wx][wy].set_has_wumpus(True)
                 for nx, ny in neighbors:
                     if (nx, ny) != (wx, wy):
-                        self.kb.tell(Not(W(nx, ny))))
+                        self.kb.tell(Not(W(nx, ny)))
 
         # Pit deduction
         if self.engine.ask(self.kb, B(x, y)):
@@ -154,7 +154,7 @@ class Agent:
                 self.kb_world[px][py].set_has_pit(True)
                 for nx, ny in neighbors:
                     if (nx, ny) != (px, py):
-                        self.kb.tell(Not(P(nx, ny))))
+                        self.kb.tell(Not(P(nx, ny)))
 
     def perceive_and_update(self, percepts):
         """
