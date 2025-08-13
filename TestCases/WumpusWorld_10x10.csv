@@ -1,0 +1,39 @@
+World Size,Num Wumpus,P Pit
+10,2,0.2
+World Map Line 1,P   B   B   .   B   P   B   .   B   P
+World Map Line 2,P   B   P   B   P   B   P   B   .   B
+World Map Line 3,W   S   B   .   B   .   B   P   B   G
+World Map Line 4,S   B   P   B   P   B   B   B   .   S
+World Map Line 5,.   .   B   .   B   B   P   B   S   W
+World Map Line 6,.   B   P   B   B   P   B   .   .   SB
+World Map Line 7,B   P   B   B   .   B   B   .   B   P
+World Map Line 8,.   B   B   P   B   B   P   B   .   B
+World Map Line 9,.   .   .   B   B   P   B   .   .   .
+World Map Line 10,.   .   .   .   .   B   P   B   .   .
+Step,Position,Direction,Action,Percepts
+0,"(0, 0)",East,Move Forward,
+1,"(0, 1)",East,Move Forward,
+2,"(0, 2)",East,Move Forward,
+3,"(0, 3)",East,Move Forward,
+4,"(0, 4)",East,Move Forward,
+5,"(0, 5)",East,Turn Left,Breeze
+6,"(0, 5)",North,Turn Left,Breeze
+7,"(0, 5)",West,Move Forward,Breeze
+8,"(0, 4)",West,Turn Right,
+9,"(0, 4)",North,Move Forward,
+10,"(1, 4)",North,Turn Left,Breeze
+11,"(1, 4)",West,Move Forward,Breeze
+12,"(1, 3)",West,Move Forward,Breeze
+13,"(1, 2)",West,Move Forward,
+14,"(1, 1)",West,Move Forward,
+15,"(1, 0)",West,Turn Right,
+16,"(1, 0)",North,Move Forward,
+17,"(2, 0)",North,Move Forward,
+18,"(3, 0)",North,Turn Right,Breeze
+19,"(3, 0)",East,Turn Right,Breeze
+20,"(3, 0)",South,Move Forward,Breeze
+21,"(2, 0)",South,Turn Left,
+22,"(2, 0)",East,Move Forward,
+23,"(2, 1)",East,Move Forward,Breeze
+24,"(2, 2)",East,Move Forward,Breeze
+Game Result,DIED - Eaten by Wumpus or fell into a pit

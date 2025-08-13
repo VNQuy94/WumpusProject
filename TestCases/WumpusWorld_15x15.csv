@@ -1,0 +1,62 @@
+World Size,Num Wumpus,P Pit
+15,3,0.2
+World Map Line 1,S   B   P   B   B   P   B   B   .   .   B   P   B   .   .
+World Map Line 2,W   S   B   B   P   B   B   P   B   .   .   B   P   B   .
+World Map Line 3,S   .   .   .   B   B   P   B   P   B   .   .   B   .   .
+World Map Line 4,B   .   .   B   .   B   B   P   B   .   B   B   P   B   .
+World Map Line 5,P   B   B   P   B   P   B   B   P   B   P   B   B   .   .
+World Map Line 6,B   .   .   B   .   B   P   B   B   .   B   .   .   .   B
+World Map Line 7,P   B   .   .   B   .   B   P   B   B   P   B   .   B   P
+World Map Line 8,B   .   .   B   P   B   P   B   .   S   B   .   B   P   B
+World Map Line 9,.   .   .   B   B   P   B   B   S   W   S   .   .   B   .
+World Map Line 10,.   .   B   P   B   B   B   P   B   S   B   .   B   P   B
+World Map Line 11,.   .   .   B   .   B   P   B   S   B   P   B   P   B   .
+World Map Line 12,.   .   .   .   B   .   B   S   W   SB  B   P   B   P   B
+World Map Line 13,.   .   .   B   P   B   P   B   SB  P   B   B   P   B   .
+World Map Line 14,.   .   .   G   B   .   B   .   .   B   .   .   B   .   .
+World Map Line 15,.   .   .   .   .   .   .   .   .   .   .   .   .   .   .
+Step,Position,Direction,Action,Percepts
+0,"(0, 0)",East,Move Forward,
+1,"(0, 1)",East,Move Forward,
+2,"(0, 2)",East,Move Forward,
+3,"(0, 3)",East,Move Forward,
+4,"(0, 4)",East,Move Forward,
+5,"(0, 5)",East,Move Forward,
+6,"(0, 6)",East,Move Forward,
+7,"(0, 7)",East,Move Forward,
+8,"(0, 8)",East,Move Forward,
+9,"(0, 9)",East,Move Forward,
+10,"(0, 10)",East,Move Forward,
+11,"(0, 11)",East,Move Forward,
+12,"(0, 12)",East,Move Forward,
+13,"(0, 13)",East,Move Forward,
+14,"(0, 14)",East,Turn Left,
+15,"(0, 14)",North,Move Forward,
+16,"(1, 14)",North,Move Forward,
+17,"(2, 14)",North,Move Forward,
+18,"(3, 14)",North,Turn Right,Breeze
+19,"(3, 14)",East,Turn Right,Breeze
+20,"(3, 14)",South,Move Forward,Breeze
+21,"(2, 14)",South,Turn Right,
+22,"(2, 14)",West,Move Forward,
+23,"(2, 13)",West,Turn Left,Breeze
+24,"(2, 13)",South,Move Forward,Breeze
+25,"(1, 13)",South,Turn Right,
+26,"(1, 13)",West,Move Forward,
+27,"(1, 12)",West,Move Forward,Breeze
+28,"(1, 11)",West,Move Forward,
+29,"(1, 10)",West,Move Forward,
+30,"(1, 9)",West,Move Forward,Breeze
+31,"(1, 8)",West,Move Forward,
+32,"(1, 7)",West,Move Forward,
+33,"(1, 6)",West,Move Forward,Breeze
+34,"(1, 5)",West,Move Forward,
+35,"(1, 4)",West,Move Forward,Breeze
+36,"(1, 3)",West,Grab,Glitter
+37,"(1, 3)",West,Move Forward,
+38,"(1, 2)",West,Move Forward,
+39,"(1, 1)",West,Move Forward,
+40,"(1, 0)",West,Turn Left,
+41,"(1, 0)",South,Move Forward,
+42,"(0, 0)",South,Climb,
+Game Result,SUCCESS - Climbed out with gold!
