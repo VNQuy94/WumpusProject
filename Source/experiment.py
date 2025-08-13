@@ -12,6 +12,7 @@ import GameCoords
 import RandomAgent
 from World import GOLD
 import copy
+import csv
 
 SCORE_WIN = 1000
 SCORE_LOSE = -1000
@@ -54,7 +55,8 @@ def run_single_game(agent, world):
         percepts = new_percepts
 
 def run_experiment(sizes, wumpus_counts, pit_densities, num_trials=10):
-    all_results = []
+    res_logic = []
+    res_random = []
     
     # Vòng lặp qua các tham số thử nghiệm
     for size in sizes:
@@ -76,7 +78,7 @@ def run_experiment(sizes, wumpus_counts, pit_densities, num_trials=10):
                     logic_result.update({
                         'agent_type': 'Logic', 'size': size, 'wumpus_count': num_wumpus, 'pit_density': p_pit
                     })
-                    all_results.append(logic_result)
+                    res_logic.append(logic_result)
 
                     random_agent_world = copy.deepcopy(original_world) # Tạo bản sao sâu khác
                     random_agent = RandomAgent.RandomAgent(size)
@@ -85,17 +87,25 @@ def run_experiment(sizes, wumpus_counts, pit_densities, num_trials=10):
                     random_result.update({
                         'agent_type': 'Random', 'size': size, 'wumpus_count': num_wumpus, 'pit_density': p_pit
                     })
-                    all_results.append(random_result)
+                    res_random.append(random_result)
 
-    return all_results
+    return res_logic, res_random
 
 if __name__ == '__main__':
     # --- CẤU HÌNH THỬ NGHIỆM ---
     # Thay đổi các danh sách này để chạy các thử nghiệm khác nhau
-    param_sizes = [5]  # Thử với bản đồ 10x10
+    param_sizes = [15]  # Thử với bản đồ 10x10
     param_wumpus = [1, 2, 3] # Số lượng wumpus từ 1 đến 4
     param_pits = [0.1, 0.2, 0.3] # Mật độ hố
     num_trials_per_setting = 20 # Chạy 20 lần cho mỗi cấu hình để có kết quả ổn định
 
-    results_data = run_experiment(param_sizes, param_wumpus, param_pits, num_trials_per_setting)
-    print(results_data)
+    res_logic, res_random = run_experiment(param_sizes, param_wumpus, param_pits, num_trials_per_setting)
+    fieldnames = res_logic[0].keys()
+    with open('logic_result_3.csv', 'w', newline='') as csvfile:
+        writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
+        writer.writeheader()
+        writer.writerows(res_logic)
+    with open('random_result_3.csv', 'w', newline='') as csvfile:
+        writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
+        writer.writeheader()
+        writer.writerows(res_random)
