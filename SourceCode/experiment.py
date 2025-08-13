@@ -15,6 +15,8 @@ import RandomAgent
 from World import GOLD
 import copy
 import csv
+import os
+import sys
 
 # Scoring constants
 SCORE_WIN = 1000   # Score when agent wins
@@ -115,23 +117,28 @@ def run_experiment(sizes, wumpus_counts, pit_densities, num_trials=10):
 if __name__ == '__main__':
     # --- EXPERIMENT CONFIGURATION ---
     # Change these lists to run different experiments
-    param_sizes = [15]  # Test with a 15x15 map
+    param_sizes = [5]  # Test with a 15x15 map
     param_wumpus = [1, 2, 3] # Number of wumpus from 1 to 3
     param_pits = [0.1, 0.2, 0.3] # Pit density
     num_trials_per_setting = 20 # Run 20 times per configuration for stable results
 
     # Run the experiment
-    res_logic, res_random = run_experiment(param_sizes, param_wumpus, param_pits, num_trials_per_setting)
+    res_logic, res_random = run_experiment(param_sizes, param_wumpus, param_pits, 10)
+    # Prepare CSV output directory and file
+    output_dir = "./Experiments" 
+    os.makedirs(output_dir, exist_ok=True)  
+    csv_filename = os.path.join(output_dir, f'logic_result_test.csv')
+    csv_filename_2 = os.path.join(output_dir, f'random_result_test.csv')
     
     # Save logic agent results to CSV
     fieldnames = res_logic[0].keys()
-    with open('logic_result_3.csv', 'w', newline='') as csvfile:
+    with open(csv_filename, 'w', newline='') as csvfile:
         writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
         writer.writeheader()
         writer.writerows(res_logic)
     
     # Save random agent results to CSV
-    with open('random_result_3.csv', 'w', newline='') as csvfile:
+    with open(csv_filename_2, 'w', newline='') as csvfile:
         writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
         writer.writeheader()
         writer.writerows(res_random)
